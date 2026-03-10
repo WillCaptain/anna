@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>测试矩形位置</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    #instructions {
+      background: #f0f0f0;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    #results {
+      background: #e8f4f8;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      white-space: pre-wrap;
+      font-family: monospace;
+    }
+    .step {
+      margin: 10px 0;
+      padding: 8px;
+      background: white;
+      border-left: 3px solid #4f7bff;
+    }
+    .highlight {
+      background: #fffacd;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔍 Anna 白板 - 矩形位置测试</h1>
+  
+  <div id="instructions">
+    <h2>测试步骤:</h2>
+    <div class="step">1. 在新标签页打开 <a href="http://localhost:8081/" target="_blank">http://localhost:8081/</a></div>
+    <div class="step">2. 点击 <span class="highlight">白板</span> 按钮 (id="open-whiteboard")</div>
+    <div class="step">3. 等待 3 秒让白板加载完成</div>
+    <div class="step">4. 点击左侧面板的第一个形状按钮 <span class="highlight">矩形</span> (class="shape-item", data-tool="rectangle")</div>
+    <div class="step">5. 在白板中央的浅灰色画布区域点击 (避开左侧面板)</div>
+    <div class="step">6. 打开浏览器开发者工具 (F12)</div>
+    <div class="step">7. 在 Console 中查找以 <span class="highlight">[DBG</span> 开头的日志</div>
+    <div class="step">8. 将结果粘贴到下面</div>
+  </div>
+
+  <h2>预期行为分析:</h2>
+  <div id="results">
+根据代码分析 (src/whiteboard.js 和 core/base/page.js):
+
+<strong>默认矩形尺寸:</strong>
+  width: 120px
+  height: 80px
+  (定义在 whiteboard.js getDefaultProperties() 函数中)
+
+<strong>创建流程:</strong>
+1. 用户点击画布位置 (x, y)
+2. 调用 pageVal.createNew(type, position.x, position.y, undefined, pendingProperties)
+3. 矩形的 (x, y) 被设置为点击位置
+4. 调用 beginDrag(position.x, position.y) 准备拖拽调整大小
+5. 调用 resize(1, 1) 将尺寸临时设为 1x1
+6. 如果用户拖拽,尺寸会随鼠标移动而改变
+7. 如果用户只点击不拖拽,在 mouseup 时恢复默认尺寸 (120x80)
+
+<strong>关键问题:</strong>
+矩形的 (x, y) 属性表示其<strong>左上角</strong>位置。
+
+因此:
+- 如果你在画布 (400, 300) 位置点击
+- 矩形的左上角将位于 (400, 300)
+- 矩形的中心将位于 (400 + 120/2, 300 + 80/2) = (460, 340)
+
+<strong>调试日志位置:</strong>
+查看 Console 中的以下日志:
+  [DBG setTool] want=rectangle, isEmpty=false
+  [DBG onMouseDown] wantedShape not empty, position x=XXX y=YYY
+  [DBG createNew] type=rectangle, x=XXX, y=YYY
+
+其中 x, y 就是矩形左上角的坐标,应该等于你点击的位置。
+  </div>
+
+  <h2>实际测试结果:</h2>
+  <textarea id="testResults" style="width: 100%; height: 200px; font-family: monospace;" 
+            placeholder="请将浏览器 Console 中的 [DBG 日志粘贴到这里..."></textarea>
+
+  <script>
+    // 自动打开测试页面
+    const testUrl = 'http://localhost:8081/';
+    console.log('测试页面地址:', testUrl);
+    console.log('请按照上述步骤进行测试');
+  </script>
+</body>
+</html>
