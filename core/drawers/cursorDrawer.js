@@ -139,19 +139,17 @@ const cursorDrawer = (() => {
         context.fill();
         return CURSORS.NONE;
     };
-    let createPenImage = function (context, x, y, rotateDegree, graphPage, direction) {
-        context.fillStyle = graphPage.graph.setting.borderColor;
-        context.strokeStyle = 'lightgray';
-        context.beginPath();
-        context.moveTo(x, y);
-        context.lineTo(x + 6, y + 2);
-        context.lineTo(x + 14, y + 10);
-        context.lineTo(x + 10, y + 14);
-        context.lineTo(x + 2, y + 6);
-        context.closePath();
-        context.fill();
-        context.stroke();
-        return CURSORS.NONE;
+    let createPenImage = function (context, x, y, rotateDegree, graphPage) {
+        const color = (graphPage && graphPage.graph && graphPage.graph.setting && graphPage.graph.setting.borderColor) || '#4f7bff';
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">` +
+            `<path d="M3 21 L5 15 L18 2 L22 6 L9 19 Z" fill="${color}" stroke="white" stroke-width="0.8"/>` +
+            `<path d="M3 21 L5 15 L7 17 Z" fill="#333"/>` +
+            `</svg>`;
+        try {
+            return `url("data:image/svg+xml;base64,${btoa(svg)}") 3 21, crosshair`;
+        } catch (_) {
+            return 'crosshair';
+        }
     };
     let createEraserImage = function (context, x, y, rotateDegree, graphPage, direction) {
         context.strokeStyle = graphPage.graph.setting.borderColor;
