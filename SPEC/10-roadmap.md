@@ -6,6 +6,69 @@
 
 ---
 
+## 三大产品形态 — 长期架构
+
+Anna 引擎以 **Graph → Pages → Shapes** 为核心拓扑，三大产品形态共享这一骨架，
+各自在每一层做特化扩展。
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         Graph（文档根对象）                          │
+│  WhiteboardGraph  │  DocumentGraph  │  PresentationGraph  │  SheetGraph │
+└──────────┬────────────────┬─────────────────┬──────────────────┬────┘
+           │                │                 │                  │
+    1 Page │         n Pages│          n Pages│          n Pages │
+           ▼                ▼                 ▼                  ▼
+┌──────────────┐  ┌──────────────────┐  ┌──────────┐  ┌──────────────┐
+│  WhiteBoard  │  │  DocumentPage    │  │  Slide   │  │  SheetPage   │
+│  Page        │  │  (A4/Letter…)    │  │  Page    │  │              │
+└──────┬───────┘  └────────┬─────────┘  └────┬─────┘  └──────┬───────┘
+       │                   │                  │               │
+  n Shapes         1 Document               n Shapes     1 Sheet
+                   Container                              (grid)
+                   ├─ Header
+                   ├─ Footer
+                   └─ Body
+                      ├─ n Paragraph（canvas 文字）
+                      ├─ n Image / Shape（嵌入）
+                      └─ n Table / Sheet（嵌入）
+```
+
+### Whiteboard（当前，已实现）
+
+| 层级 | 类型 | 说明 |
+|------|------|------|
+| Graph | `graph` | 1 个 Graph |
+| Page | `page` | 1 个画布页 |
+| Shapes | 所有 shape 类型 | n 个自由摆放的形状 |
+
+### Document（对标 Word）
+
+| 层级 | 类型 | 说明 |
+|------|------|------|
+| Graph | `DocumentGraph` extends `graph` | 文档级设置（页面尺寸、边距、样式表） |
+| Page | `DocumentPage` extends `page` | n 个 A4/Letter 页，自动分页 |
+| Content | `DocumentContainer` extends `container` | 每页含 Header / Footer / Body |
+| Body children | `Paragraph` / `Image` / `Table` | Canvas 渲染的段落、嵌入图片、表格 |
+
+### Presentation（对标 PowerPoint）
+
+| 层级 | 类型 | 说明 |
+|------|------|------|
+| Graph | `PresentationGraph` extends `graph` | 幻灯片集，含主题/母版/放映设置 |
+| Page | `Slide` extends `page` | n 张幻灯片（固定尺寸 16:9 / 4:3） |
+| Shapes | 所有 shape 类型 + `SlideText` | 与 Whiteboard 相同，但文字编辑为 PPT 风格 |
+
+### Sheet（对标 Excel）
+
+| 层级 | 类型 | 说明 |
+|------|------|------|
+| Graph | `SheetGraph` extends `graph` | 工作簿级设置（命名范围、全局公式） |
+| Page | `SheetPage` extends `page` | n 个工作表标签页 |
+| Content | `Sheet` (单一 container) | 1 个充满整页的表格，行列无限滚动 |
+
+---
+
 ## Item 1 — Canvas 原生文本引擎 + Document 形状
 
 ### 背景
