@@ -123,134 +123,133 @@ const heartDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) => 
 });
 
 // ── 赞 (thumbsUp) ────────────────────────────────────────────────────────────
-// 拇指（斜向上的圆角矩形）+ 握拳（四格扁矩形）+ 手掌
+// 拇指（左侧竖直胶囊，高而窄）+ 四指块（右侧横向矩形，接在拇指中部）+ 掌心（底部）
 const thumbsUpDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) => {
-    const fistY = py + H * 0.50;
-    const fistH = H * 0.40;
-    const fistW = W * 0.58;
-    const fistX = px + W * 0.22;
-    const bR    = fistH * 0.14;
-
-    // 握拳主体
+    // 拇指（左侧，竖直胶囊）
+    const tX = px + W * 0.08;
+    const tY = py + H * 0.05;
+    const tW = W * 0.26;
+    const tH = H * 0.60;
     context.beginPath();
-    context.roundRect(fistX, fistY, fistW, fistH, bR);
+    context.roundRect(tX, tY, tW, tH, tW * 0.48);
     context.fill();
     context.stroke();
 
-    // 四个指节分隔线
-    const segW = fistW / 4;
-    context.globalAlpha = 0.45;
+    // 四指块（拇指右侧，在拇指约 1/3 高度处横向延伸）
+    const fX = tX + tW * 0.72;
+    const fY = tY + tH * 0.32;
+    const fW = px + W * 0.94 - fX;
+    const fH = tH * 0.40;
+    context.beginPath();
+    context.roundRect(fX, fY, fW, fH, fH * 0.26);
+    context.fill();
+    context.stroke();
+
+    // 三条指节分隔线（淡）
+    context.globalAlpha = 0.30;
     for (let i = 1; i < 4; i++) {
         context.beginPath();
-        context.moveTo(fistX + segW * i, fistY);
-        context.lineTo(fistX + segW * i, fistY + fistH * 0.50);
+        context.moveTo(fX + fW * i / 4, fY + fH * 0.18);
+        context.lineTo(fX + fW * i / 4, fY + fH * 0.82);
         context.stroke();
     }
     context.globalAlpha = 1;
 
-    // 拇指（斜向上）
-    context.save();
-    context.translate(fistX + fistW * 0.14, fistY);
-    context.rotate(-Math.PI / 6);
-    const tw = fistW * 0.28;
-    const th = fistH * 0.72;
+    // 掌心（四指块下方，宽度相同）
+    const pY = fY + fH * 0.72;
+    const pH = py + H * 0.94 - pY;
     context.beginPath();
-    context.roundRect(-tw / 2, -th, tw, th, tw * 0.45);
+    context.roundRect(fX, pY, fW, pH, pH * 0.22);
     context.fill();
     context.stroke();
-    context.restore();
 });
 
 // ── 踩 (thumbsDown) ──────────────────────────────────────────────────────────
-// thumbsUp 翻转版
+// thumbsUp 以中心垂直翻转
 const thumbsDownDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) => {
     context.save();
-    context.translate(px + W / 2, py + H / 2);
+    context.translate(px + W * 0.5, py + H * 0.5);
     context.scale(1, -1);
-    context.translate(-px - W / 2, -py - H / 2);
+    context.translate(-(px + W * 0.5), -(py + H * 0.5));
 
-    // 复用 thumbsUp 绘制逻辑
-    const fistY = py + H * 0.50;
-    const fistH = H * 0.40;
-    const fistW = W * 0.58;
-    const fistX = px + W * 0.22;
-    const bR    = fistH * 0.14;
-
+    const tX = px + W * 0.08;
+    const tY = py + H * 0.05;
+    const tW = W * 0.26;
+    const tH = H * 0.60;
     context.beginPath();
-    context.roundRect(fistX, fistY, fistW, fistH, bR);
+    context.roundRect(tX, tY, tW, tH, tW * 0.48);
     context.fill();
     context.stroke();
 
-    context.globalAlpha = 0.45;
-    const segW = fistW / 4;
+    const fX = tX + tW * 0.72;
+    const fY = tY + tH * 0.32;
+    const fW = px + W * 0.94 - fX;
+    const fH = tH * 0.40;
+    context.beginPath();
+    context.roundRect(fX, fY, fW, fH, fH * 0.26);
+    context.fill();
+    context.stroke();
+
+    context.globalAlpha = 0.30;
     for (let i = 1; i < 4; i++) {
         context.beginPath();
-        context.moveTo(fistX + segW * i, fistY);
-        context.lineTo(fistX + segW * i, fistY + fistH * 0.50);
+        context.moveTo(fX + fW * i / 4, fY + fH * 0.18);
+        context.lineTo(fX + fW * i / 4, fY + fH * 0.82);
         context.stroke();
     }
     context.globalAlpha = 1;
 
-    context.save();
-    context.translate(fistX + fistW * 0.14, fistY);
-    context.rotate(-Math.PI / 6);
-    const tw = fistW * 0.28;
-    const th = fistH * 0.72;
+    const pY = fY + fH * 0.72;
+    const pH = py + H * 0.94 - pY;
     context.beginPath();
-    context.roundRect(-tw / 2, -th, tw, th, tw * 0.45);
+    context.roundRect(fX, pY, fW, pH, pH * 0.22);
     context.fill();
     context.stroke();
-    context.restore();
 
     context.restore();
 });
 
 // ── 手指指向 (cursorPointer) ──────────────────────────────────────────────────
-// 食指（高，圆头）+ 3根弯曲手指（短矩形）+ 掌心
+// 食指（左，高而细，独立伸直）+ 三根收拢手指（右侧矮块）+ 掌心（底部）
+// 清晰还原"指针手势"：一根指起，其余收拢
 const cursorPointerDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) => {
-    const palmX = px + W * 0.14;
-    const palmY = py + H * 0.46;
-    const palmW = W * 0.72;
-    const palmH = H * 0.44;
-    const bR    = palmH * 0.14;
-
-    // 掌心
+    // 食指（最高，左侧胶囊，独立延伸）
+    const ixW = W * 0.24;
+    const ixH = H * 0.64;
+    const ixX = px + W * 0.12;
+    const ixY = py + H * 0.04;
     context.beginPath();
-    context.roundRect(palmX, palmY, palmW, palmH, bR);
+    context.roundRect(ixX, ixY, ixW, ixH, ixW * 0.48);
     context.fill();
     context.stroke();
 
-    // 食指（竖直，靠左）
-    const indexW = palmW * 0.22;
-    const indexH = H * 0.56;
-    const indexX = palmX + palmW * 0.10;
+    // 三根收拢手指（右侧矮横块，连接在食指中下部）
+    const fX = ixX + ixW * 0.74;
+    const fY = ixY + ixH * 0.40;
+    const fW = px + W * 0.92 - fX;
+    const fH = ixH * 0.36;
     context.beginPath();
-    context.roundRect(indexX, palmY - indexH, indexW, indexH, indexW * 0.5);
+    context.roundRect(fX, fY, fW, fH, fH * 0.28);
     context.fill();
     context.stroke();
 
-    // 中指（次高）
-    context.beginPath();
-    context.roundRect(indexX + indexW + W * 0.02, palmY - indexH * 0.72, indexW, indexH * 0.72, indexW * 0.5);
-    context.fill();
-    context.stroke();
-
-    // 无名指（最短）
-    context.beginPath();
-    context.roundRect(indexX + indexW * 2 + W * 0.04, palmY - indexH * 0.56, indexW, indexH * 0.56, indexW * 0.5);
-    context.fill();
-    context.stroke();
-
-    // 分隔线
-    context.globalAlpha = 0.35;
+    // 两条指节分隔线（淡）
+    context.globalAlpha = 0.28;
     for (let i = 1; i < 3; i++) {
-        const sx = palmX + palmW * (i * 0.25 + 0.08);
         context.beginPath();
-        context.moveTo(sx, palmY);
-        context.lineTo(sx, palmY + palmH * 0.45);
+        context.moveTo(fX + fW * i / 3, fY + fH * 0.20);
+        context.lineTo(fX + fW * i / 3, fY + fH * 0.80);
         context.stroke();
     }
     context.globalAlpha = 1;
+
+    // 掌心（收拢手指下方，宽度对齐）
+    const pY = fY + fH * 0.70;
+    const pH = py + H * 0.96 - pY;
+    context.beginPath();
+    context.roundRect(fX, pY, fW, pH, pH * 0.22);
+    context.fill();
+    context.stroke();
 });
 
 // ── Information (info) ────────────────────────────────────────────────────────
