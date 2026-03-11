@@ -116,7 +116,7 @@ const padlockDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) =
     context.beginPath();
     context.moveTo(shLX, bodyY);
     context.lineTo(shLX, shArcY);
-    context.arc(shCx, shArcY, shR, Math.PI, 0, true);   // CCW ＝ 经过顶部
+    context.arc(shCx, shArcY, shR, Math.PI, 0, false);  // CW π→3π/2(顶)→0，经过弧顶
     context.lineTo(shRX, bodyY);
     context.stroke();
 });
@@ -167,7 +167,7 @@ const padlockOpenDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, b
     context.beginPath();
     context.moveTo(shLX, bodyY);                          // 左侧进入锁体
     context.lineTo(shLX, shArcY);                         // 左臂上升
-    context.arc(shCx, shArcY, shR, Math.PI, 0, true);    // 弧顶
+    context.arc(shCx, shArcY, shR, Math.PI, 0, false);   // CW π→3π/2(顶)→0，经过弧顶
     context.lineTo(shRX, shArcY + H * 0.12);             // 右臂短桩（未到 bodyY）
     context.stroke();
 });
