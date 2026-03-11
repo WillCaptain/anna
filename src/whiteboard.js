@@ -259,6 +259,20 @@ function setTool(tool) {
     updateStatusBar();
 }
 
+/**
+ * 返回指定形状类型在**首次创建**时使用的初始属性（尺寸、颜色等）。
+ *
+ * 职责与 shape.getDisplayFields() 完全不同：
+ *   - getDisplayFields()  → 描述"已存在的 shape"在属性面板里如何显示和编辑（运行时多态）
+ *   - getDefaultProperties() → 描述"即将创建的 shape"应该初始化成什么尺寸/外观（创建时配置）
+ *
+ * 这里用 if-type 是**有意为之**的数据配置，而非需要消除的分支逻辑：
+ *   每种形状有其视觉上最合理的默认比例（如 phone 是竖长方形，ellipse 是正圆），
+ *   这些是静态配置数据，无需多态。未来如需让 shape 类自带默认尺寸，
+ *   可在各 shape 模块里添加 static defaultSize = [w, h]，在此统一查表。
+ *
+ * 调用方：setTool() → annPage.want(type, props)
+ */
 function getDefaultProperties(type) {
     const base = {
         width: 120, height: 80,
