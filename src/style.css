@@ -414,45 +414,50 @@ html, body {
   font-variant-numeric: tabular-nums;
 }
 
-/* ─── Left shape panel (Outlook-style) ───────────────────────────────────── */
+/* ─── Left shape panel (Outlook-style groups) ────────────────────────────── */
 #shape-panel {
-  width: 164px;
+  width: 196px;
   flex-shrink: 0;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;     /* nav on left, content on right */
   background: var(--surface);
   border-right: 1px solid var(--border);
   overflow: hidden;
 }
 
-/* Tab row */
+/* Vertical icon nav — expandable downward */
 #shape-tabs {
-  display: flex;
-  flex-direction: row;
-  border-bottom: 1px solid var(--border);
+  width: 40px;
   flex-shrink: 0;
-}
-
-.shape-tab {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
+  border-right: 1px solid var(--border);
+  border-bottom: none;
+  padding: 4px 0;
+  gap: 2px;
+  background: var(--surface);
+}
+
+.shape-tab {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 3px;
-  padding: 8px 4px;
   border: none;
+  border-radius: 6px;
+  border-left: 2px solid transparent;
   background: transparent;
   color: var(--text-dim);
   cursor: pointer;
-  font-size: 10px;
-  border-bottom: 2px solid transparent;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
   position: relative;
 }
 
 .shape-tab svg { pointer-events: none; flex-shrink: 0; }
-.shape-tab span { pointer-events: none; line-height: 1; }
+.shape-tab span { display: none; }    /* icon-only; tooltip via title="" */
 
 .shape-tab:hover {
   background: var(--surface2);
@@ -461,15 +466,16 @@ html, body {
 
 .shape-tab.active {
   color: var(--accent);
-  border-bottom-color: var(--accent);
+  border-left-color: var(--accent);
   background: var(--active);
 }
 
-/* Shape content area */
+/* Shape content area — fills remaining width beside the icon nav */
 #shape-content {
   flex: 1;
+  min-width: 0;
   overflow-y: auto;
-  padding: 8px;
+  padding: 6px 6px 12px;
 }
 
 .shape-category {
@@ -478,6 +484,61 @@ html, body {
 
 .shape-category.active {
   display: block;
+}
+
+/* ─── Outlook-style collapsible groups ───────────────────────────────────── */
+.shape-group {
+  margin-bottom: 2px;
+}
+
+.shape-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 5px 4px 4px;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  user-select: none;
+}
+
+.shape-group-header:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.shape-group-chevron {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  opacity: 0.5;
+  transition: transform 0.2s ease;
+}
+
+.shape-group.collapsed .shape-group-chevron {
+  transform: rotate(-90deg);
+}
+
+.shape-group-body {
+  overflow: hidden;
+  max-height: 600px;
+  padding-top: 3px;
+  padding-bottom: 4px;
+  transition: max-height 0.22s ease, padding 0.22s ease;
+}
+
+.shape-group.collapsed .shape-group-body {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 /* Shape grid — 2 columns */
@@ -514,6 +575,9 @@ html, body {
   pointer-events: none;
   line-height: 1;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .shape-item:hover {
@@ -526,6 +590,33 @@ html, body {
   border-color: var(--accent);
   background: var(--active);
   color: var(--accent);
+}
+
+/* Empty category placeholder */
+.cat-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 12px;
+  color: var(--text-dim);
+  font-size: 11px;
+  text-align: center;
+  opacity: 0.5;
+}
+
+.cat-empty svg {
+  width: 32px;
+  height: 32px;
+}
+
+.shape-hint {
+  margin: 0 0 8px;
+  padding: 0 10px;
+  font-size: 10px;
+  color: var(--text-dim);
+  opacity: 0.65;
+  line-height: 1.5;
 }
 
 /* Canvas wrapper — fills remaining space */
@@ -545,7 +636,7 @@ html, body {
   left: 16px;
   right: 16px;
   bottom: 16px;
-  background: #e8eaf2;
+  background: #c8c5c0;
   box-shadow: 0 4px 28px rgba(0, 0, 0, 0.5);
   border-radius: 4px;
   overflow: hidden;
@@ -666,6 +757,34 @@ input[type="range"] {
 .dot { opacity: 0.4; }
 
 /* The engine manages sensor.style.cursor directly via the animation loop */
+
+/* ─── Icon library — coming-soon badges ─────────────────────────────────── */
+.icon-coming-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px 2px 4px;
+}
+
+.icon-cat-badge {
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 2px 7px;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.icons-coming-label {
+  font-size: 9.5px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 8px 4px 4px;
+  opacity: 0.7;
+}
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }

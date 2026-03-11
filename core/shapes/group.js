@@ -72,7 +72,13 @@ const group = (id, x, y, width, height, parent, drawer = groupDrawer) => {
     const invalidateAlone = self.invalidateAlone;
     self.invalidateAlone = () => {
         if (self.page.isReady && self.autoAlign) {
-            const shapes = self.getShapes().filter(s => !s.ignoreAutoFit && s.visible);
+            const shapes = self.getShapes().filter(s => {
+                if (!s.visible || s.ignoreAutoFit) return false;
+                // When the container has a family, only include shapes with a matching family.
+                // Shapes with no family (family === "" or undefined) are excluded.
+                if (self.family) return s.family === self.family;
+                return true;
+            });
             if (shapes.length > 0) {
                 self.x = Math.min(...shapes.map(s => convertx(s))) - self.groupBorder;
                 self.y = Math.min(...shapes.map(s => converty(s))) - self.groupBorder;

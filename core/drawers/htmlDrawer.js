@@ -492,11 +492,17 @@ const drawer = (shape, div, x = 0, y = 0) => {
    * 通过编辑器渲染文本.
    * 第一次通过编辑器渲染时，需要记录textInnerHtml，方便后续初始化时，通过textInnerHtml渲染，提高渲染性能.
    *
+   * 当 graph 未集成富文本编辑器时（editor 为 null），降级为直接写入 innerHTML，
+   * 使所有形状的文字在无 CKEditor 环境下均能正常显示。
+   *
    * @type {(function(*, *): void)|*}
    */
   self.renderTextByEditor = (text, autoFocus) => {
     const editor = self.getEditor();
     if (!editor) {
+      if (self.text) {
+        self.text.innerHTML = typeof text === 'string' ? text : '';
+      }
       return;
     }
     editor.unmount();

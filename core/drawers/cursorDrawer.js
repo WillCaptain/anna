@@ -151,15 +151,17 @@ const cursorDrawer = (() => {
             return 'crosshair';
         }
     };
-    let createEraserImage = function (context, x, y, rotateDegree, graphPage, direction) {
-        context.strokeStyle = graphPage.graph.setting.borderColor;
-        context.fillStyle = 'white';
-        const r = graphPage.mouseInShape.eraser * 2;
-        context.beginPath();
-        context.rect(x - r, y - r, 2 * r, 2 * r);
-        context.fill();
-        context.stroke();
-        return CURSORS.NONE;
+    let createEraserImage = function (context, x, y, rotateDegree, graphPage) {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">` +
+            `<rect x="2" y="7" width="20" height="13" rx="2" fill="#ffb3c6" stroke="white" stroke-width="0.8"/>` +
+            `<rect x="2" y="14" width="20" height="6" rx="1" fill="#ff6b8e"/>` +
+            `<line x1="2" y1="14" x2="22" y2="14" stroke="white" stroke-width="0.6"/>` +
+            `</svg>`;
+        try {
+            return `url("data:image/svg+xml;base64,${btoa(svg)}") 2 20, crosshair`;
+        } catch (_) {
+            return 'crosshair';
+        }
     };
 
     images['ew-resize'] = () => 'w-resize';
@@ -181,7 +183,7 @@ const cursorDrawer = (() => {
     images[CURSORS.PRESENTATION] = createPresentationImage;
     images[CURSORS.PEN] = createPenImage;
     images[CURSORS.ERASER] = createEraserImage;
-    images['not-allowed'] = () => {};
+    images['not-allowed'] = () => 'not-allowed';
     images[CURSORS.TEXT] = () => CURSORS.TEXT;
     images[CURSORS.GRAB] = () => CURSORS.GRAB;
     images[CURSORS.GRABBING] = () => CURSORS.GRABBING;
@@ -193,7 +195,7 @@ const cursorDrawer = (() => {
         if (!page.showCursor()) {
             return false;
         }
-        cursorVal = page.mode === (PAGE_MODE.PRESENTATION || PAGE_MODE.VIEW) ? CURSORS.PRESENTATION : cursorVal;
+        cursorVal = (page.mode === PAGE_MODE.PRESENTATION || page.mode === PAGE_MODE.VIEW) ? CURSORS.PRESENTATION : cursorVal;
         // if (position == null) return;
         let degree = 0;
         if (shape) {

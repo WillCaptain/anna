@@ -88,26 +88,36 @@ const calculateShapesPosition = (frame) => {
     };
 }
 
+const POPUP_ATTR = 'data-anna-popup';
+
 const popupMenu = (() => {
     let currentEl = null;
     let currentPage = null;
     let savedEscaped = null;
 
+    const isInsidePopup = (target) =>
+        !!(target && target.closest && target.closest(`[${POPUP_ATTR}]`));
+
     const dismiss = () => {
-        if (currentEl) { currentEl.remove(); currentEl = null; }
-        if (currentPage && savedEscaped !== null) {
+        // remove all popup elements (main + any open submenus)
+        document.querySelectorAll(`[${POPUP_ATTR}]`).forEach(el => el.remove());
+        currentEl = null;
+        if (currentPage && savedEscaped !== undefined) {
             currentPage.escaped = savedEscaped;
-            savedEscaped = null;
         }
+        savedEscaped = undefined;
         currentPage = null;
-        document.removeEventListener('mousedown', onOutsideClick, true);
-        document.removeEventListener('keydown', onKeyDown, true);
+        document.removeEventListener('mousedown',   onOutsideEvent, true);
+        document.removeEventListener('contextmenu', onOutsideEvent, true);
+        document.removeEventListener('keydown',     onKeyDown,      true);
     };
 
-    const onOutsideClick = (e) => {
-        if (currentEl && !currentEl.contains(e.target)) dismiss();
+    const onOutsideEvent = (e) => {
+        if (!isInsidePopup(e.target)) dismiss();
     };
-    const onKeyDown = (e) => { if (e.key === 'Escape') dismiss(); };
+    const onKeyDown = (e) => {
+        if (e.key === 'Escape' || e.key === 'Esc') dismiss();
+    };
 
     const drawIcon = (drawFn) => {
         const canvas = document.createElement('canvas');
@@ -122,6 +132,7 @@ const popupMenu = (() => {
 
     const buildMenu = (shape, items, clientX, clientY) => {
         const root = document.createElement('div');
+        root.setAttribute(POPUP_ATTR, 'true');
         root.style.cssText = [
             'position:fixed', `left:${clientX}px`, `top:${clientY}px`,
             'background:rgba(255,255,255,0.97)', 'border:1px solid #c0c4cc',
@@ -161,13 +172,12 @@ const popupMenu = (() => {
             let subEl = null;
             item.addEventListener('mouseenter', () => {
                 item.style.background = 'rgba(0,120,215,0.1)';
-                // close any sibling submenus
-                root.querySelectorAll('.anna-sub').forEach(s => { s.remove(); });
+                // close any sibling submenus opened by other items at this level
+                root.querySelectorAll(`[${POPUP_ATTR}]`).forEach(s => s.remove());
                 subEl = null;
                 if (m.menus && m.menus.length > 0) {
                     const r = item.getBoundingClientRect();
                     subEl = buildMenu(shape, m.menus, r.right + 2, r.top);
-                    subEl.classList.add('anna-sub');
                     document.body.appendChild(subEl);
                     fitInViewport(subEl, r.right + 2, r.top);
                 }
@@ -218,8 +228,13 @@ const popupMenu = (() => {
         document.body.appendChild(currentEl);
         fitInViewport(currentEl, clientX, clientY);
 
-        document.addEventListener('mousedown', onOutsideClick, true);
-        document.addEventListener('keydown', onKeyDown, true);
+        // Use a short delay so the current contextmenu event itself doesn't
+        // immediately trigger onOutsideEvent on the same click.
+        setTimeout(() => {
+            document.addEventListener('mousedown',   onOutsideEvent, true);
+            document.addEventListener('contextmenu', onOutsideEvent, true);
+            document.addEventListener('keydown',     onKeyDown,      true);
+        }, 0);
 
         savedEscaped = page.escaped;
         page.escaped = () => { dismiss(); };

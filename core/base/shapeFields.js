@@ -15,7 +15,7 @@ all.shape = ['id', 'x', 'y', 'width', 'height', 'backAlpha', 'globalAlpha', 'cor
   'shadowColor', 'loadCode', 'clickCode', 'editingCode', 'editedCode', 'numberPressedCode', 'keyPressedCode', 'selectedCode', 'unSelectedCode', 'beforeRemoveCode', 'afterRemovedCode', 'resizedCode', 'movedCode', 'focusedCode',
   'unfocusedCode', 'containerChangedCode', 'textChangedCode', 'draggingCode', 'mouseUpCode', 'mouseDownCode', 'mouseMoveCode', 'draggingCode', 'animateCode', 'padLeft', 'padRight', 'padTop', 'padBottom', 'pDock', 'ignoreDock',
   'dynamicCode', 'ignorePageMode', 'visible', 'index', 'rotateAble', 'selectable', 'resizeable', 'deletable', 'moveable', 'dragable', 'deleteFromShare', 'readOnly', 'tags', 'properties', 'local', 'entangleIdE', 'title', 'desc',
-  'bold', 'italic', 'strikethrough', 'underline', 'numberedList', 'bulletedList', 'allowLink', 'scrollLock', 'referenceId', 'namespace', 'textInnerHtml', 'version', 'minHeight'];
+  'bold', 'italic', 'strikethrough', 'underline', 'numberedList', 'bulletedList', 'allowLink', 'scrollLock', 'referenceId', 'namespace', 'textInnerHtml', 'version', 'minHeight', 'family'];
 
 all.rectangle = ['emphasized', 'priority', 'infoType', 'progressStatus', 'progressPercent', 'showedProgress', 'emphasizeType', 'shineColor1', 'shineColor2', 'assignTo', 'shared', 'sharedBy'];
 

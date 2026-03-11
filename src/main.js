@@ -11,6 +11,21 @@ import '@anna/common/extensions/arrayExtension.js';
 import '@anna/common/extensions/canvasExtension.js';
 import '@anna/common/extensions/stringExtension.js';
 import {initWhiteboard} from './whiteboard.js';
+import {t, isZh} from './i18n.js';
+
+// ─── 国际化：非中文环境替换所有 data-i18n 文本 ───────────────────────────────
+function applyI18n() {
+    document.documentElement.lang = isZh ? 'zh-CN' : 'en';
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const text = t(el.dataset.i18n);
+        if (text && text !== el.dataset.i18n) el.textContent = text;
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const text = t(el.dataset.i18nTitle);
+        if (text && text !== el.dataset.i18nTitle) el.title = text;
+    });
+}
+applyI18n();
 
 // ─── 视图路由 ────────────────────────────────────────────────────────────────
 
