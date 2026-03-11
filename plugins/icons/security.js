@@ -337,62 +337,76 @@ const scalesDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) =>
     context.lineTo(beamRX, beamRY);
     context.stroke();
 
-    // 左侧秤盘（链 + 弧形盘）
-    const lPanY = py + H * 0.64;
+    // 左侧秤盘：对称 V 形链（从梁端点向两侧散开）+ 水平秤盘线
+    const lSpread = W * 0.13;
+    const lPanY   = py + H * 0.64;
     context.beginPath();
     context.moveTo(beamLX, beamLY);
-    context.lineTo(beamLX - W * 0.09, lPanY);
-    context.lineTo(beamLX + W * 0.09, lPanY);
-    context.stroke();
-    context.beginPath();
-    context.arc(beamLX, lPanY, W * 0.10, 0, Math.PI);
+    context.lineTo(beamLX - lSpread, lPanY);   // 左链
+    context.moveTo(beamLX, beamLY);
+    context.lineTo(beamLX + lSpread, lPanY);   // 右链
+    context.moveTo(beamLX - lSpread, lPanY);
+    context.lineTo(beamLX + lSpread, lPanY);   // 水平秤盘线
     context.stroke();
 
-    // 右侧秤盘（链 + 弧形盘，位置更低）
-    const rPanY = py + H * 0.68;
+    // 右侧秤盘（位置略低）
+    const rSpread = W * 0.13;
+    const rPanY   = py + H * 0.70;
     context.beginPath();
     context.moveTo(beamRX, beamRY);
-    context.lineTo(beamRX - W * 0.09, rPanY);
-    context.lineTo(beamRX + W * 0.09, rPanY);
-    context.stroke();
-    context.beginPath();
-    context.arc(beamRX, rPanY, W * 0.10, 0, Math.PI);
+    context.lineTo(beamRX - rSpread, rPanY);
+    context.moveTo(beamRX, beamRY);
+    context.lineTo(beamRX + rSpread, rPanY);
+    context.moveTo(beamRX - rSpread, rPanY);
+    context.lineTo(beamRX + rSpread, rPanY);
     context.stroke();
 });
 
 // ── 手铐 (handcuffs) ─────────────────────────────────────────────────────────
-// 左右两个圆环（粗描边）+ 中间两节链环
+// 两个腕环（圆形，位于上方）+ 竖向短连杆 + 横向链节（在下方），
+// 将腕环与链节分离，避免与眼镜轮廓混淆
 const handcuffsDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) => {
-    const cy   = py + H * 0.50;
-    const r    = Math.min(W, H) * 0.20;
-    const lCx  = px + W * 0.25;
-    const rCx  = px + W * 0.75;
-    const prevLw    = context.lineWidth;
-    context.lineWidth = Math.max(bw * 1.8, W * 0.055);
+    const ringCy  = py + H * 0.36;                  // 腕环圆心（偏上）
+    const r       = Math.min(W, H) * 0.18;
+    const lCx     = px + W * 0.26;
+    const rCx     = px + W * 0.74;
+    const chainY  = py + H * 0.74;                  // 链节中心（偏下）
+    const prevLw  = context.lineWidth;
+    context.lineWidth = Math.max(bw * 1.6, W * 0.048);
 
-    // 左圆环
+    // 左腕环
     context.beginPath();
-    context.arc(lCx, cy, r, 0, Math.PI * 2);
+    context.arc(lCx, ringCy, r, 0, Math.PI * 2);
     context.stroke();
 
-    // 右圆环
+    // 右腕环
     context.beginPath();
-    context.arc(rCx, cy, r, 0, Math.PI * 2);
+    context.arc(rCx, ringCy, r, 0, Math.PI * 2);
     context.stroke();
 
     context.lineWidth = prevLw;
 
-    // 中间两节链环（交叉椭圆）
-    const cx1 = (lCx + r + rCx - r) / 2 - W * 0.06;
-    const cx2 = cx1 + W * 0.12;
-    const lrx = W * 0.055, lry = W * 0.032;
+    // 左腕环底部到链节的竖向连接线
+    context.beginPath();
+    context.moveTo(lCx, ringCy + r);
+    context.lineTo(lCx, chainY);
+    context.stroke();
 
+    // 右腕环底部到链节的竖向连接线
     context.beginPath();
-    context.ellipse(cx1, cy, lrx, lry, -Math.PI / 5, 0, Math.PI * 2);
+    context.moveTo(rCx, ringCy + r);
+    context.lineTo(rCx, chainY);
     context.stroke();
-    context.beginPath();
-    context.ellipse(cx2, cy, lrx, lry,  Math.PI / 5, 0, Math.PI * 2);
-    context.stroke();
+
+    // 三节横向链环（水平椭圆，均匀分布于两连接线之间）
+    const linkRx = W * 0.055, linkRy = H * 0.038;
+    const linkGap = (rCx - lCx) / 2;
+    for (let i = 0; i < 3; i++) {
+        const lx = lCx + linkGap * i / 2 + linkGap * 0.25;
+        context.beginPath();
+        context.ellipse(lx + linkGap * 0.25 * i, chainY, linkRx, linkRy, 0, 0, Math.PI * 2);
+        context.stroke();
+    }
 });
 
 // ── 监狱栏杆 (prisonBars) ────────────────────────────────────────────────────
@@ -552,48 +566,51 @@ const badgeDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) => 
 
 // ── 摄像头 (camera) ───────────────────────────────────────────────────────────
 // 矩形机身（左窄右宽梯形感）+ 右侧镜头（圆圈）+ 底部安装底座
+// ── 相机 (camera) ──────────────────────────────────────────────────────────────
+// 横向矩形机身 + 顶部取景器凸包 + 居中大镜头（外环 + 内实圆）+ 左侧闪光灯小方块
 const cameraDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) => {
-    // 机身（梯形，左边缘稍短）
-    const t  = py + H * 0.28;
-    const b  = py + H * 0.72;
-    const lX = px + W * 0.10;
-    const rX = px + W * 0.88;
-    const lt = py + H * 0.33;   // 左侧顶
-    const lb = py + H * 0.67;   // 左侧底
-
+    // ① 主机身（横向圆角矩形）
+    const bodyX = px + W * 0.04;
+    const bodyY = py + H * 0.28;
+    const bodyW = W  * 0.92;
+    const bodyH = H  * 0.54;
     context.beginPath();
-    context.moveTo(lX, lt);
-    context.lineTo(rX, t);
-    context.lineTo(rX, b);
-    context.lineTo(lX, lb);
-    context.closePath();
+    context.roundRect(bodyX, bodyY, bodyW, bodyH, bodyH * 0.12);
     context.fill();
     context.stroke();
 
-    // 外圈镜头
-    const lensCx = px + W * 0.61;
-    const lensCy = py + H * 0.50;
-    const lensR  = H * 0.18;
+    // ② 顶部取景器凸包（左侧小矩形）
+    const vpX = px + W * 0.20;
+    const vpW = W  * 0.28;
+    const vpH = bodyY - py - H * 0.06;
+    context.beginPath();
+    context.roundRect(vpX, py + H * 0.06, vpW, vpH, vpH * 0.30);
+    context.fill();
+    context.stroke();
+
+    // ③ 快门按钮（顶部右侧小圆）
+    context.beginPath();
+    context.arc(px + W * 0.80, bodyY - H * 0.02, W * 0.050, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+
+    // ④ 镜头外环
+    const lensCx = px + W * 0.56;
+    const lensCy = bodyY + bodyH * 0.50;
+    const lensR  = H  * 0.20;
     context.beginPath();
     context.arc(lensCx, lensCy, lensR, 0, Math.PI * 2);
     context.stroke();
 
-    // 内圈（光圈）
+    // ⑤ 镜头内实圆（光圈）
     context.beginPath();
-    context.arc(lensCx, lensCy, lensR * 0.55, 0, Math.PI * 2);
+    context.arc(lensCx, lensCy, lensR * 0.54, 0, Math.PI * 2);
     context.fill();
     context.stroke();
 
-    // 小指示灯（机身左上角小圆）
+    // ⑥ 左侧闪光灯（小圆角方块）
     context.beginPath();
-    context.arc(px + W * 0.19, py + H * 0.38, W * 0.035, 0, Math.PI * 2);
-    context.fill();
-    context.stroke();
-
-    // 底部安装底座
-    const bsX = px + W * 0.30;
-    context.beginPath();
-    context.roundRect(bsX, py + H * 0.72, W * 0.40, H * 0.12, H * 0.04);
+    context.roundRect(px + W * 0.09, bodyY + bodyH * 0.20, W * 0.14, bodyH * 0.38, W * 0.025);
     context.fill();
     context.stroke();
 });

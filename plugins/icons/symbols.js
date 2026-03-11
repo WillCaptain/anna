@@ -47,6 +47,8 @@ const symbolMaleDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw
     context.lineTo(tipX, tipY);
     context.stroke();
 
+    // arrowHead 用 fill，需显式用描边色填充，否则 backColor 可能透明/白色导致箭头不可见
+    context.fillStyle = stroke;
     arrowHead(context, tipX, tipY, ang, Math.max(bw * 2.5, W * 0.06));
 });
 
@@ -76,16 +78,21 @@ const symbolFemaleDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, 
 });
 
 // ── 水滴 (droplet) ────────────────────────────────────────────────────────────
-// 贝塞尔曲线泪滴：尖顶 + 膨胀底部
+// 上半：两条贝塞尔曲线收成尖顶；下半：正圆弧（半圆），形成标准水滴轮廓
 const dropletDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) => {
-    const cx  = px + W * 0.50;
-    const top = py + H * 0.06;
-    const bot = py + H * 0.92;
+    const cx   = px + W * 0.50;
+    const tipY = py + H * 0.06;   // 顶端尖点
+    const midY = py + H * 0.58;   // 底部半圆圆心
+    const r    = W  * 0.38;       // 半圆半径
 
     context.beginPath();
-    context.moveTo(cx, top);
-    context.bezierCurveTo(cx + W * 0.42, py + H * 0.40, cx + W * 0.42, py + H * 0.68, cx, bot);
-    context.bezierCurveTo(cx - W * 0.42, py + H * 0.68, cx - W * 0.42, py + H * 0.40, cx, top);
+    context.moveTo(cx, tipY);
+    // 右侧贝塞尔：从尖顶弯曲到半圆右端
+    context.bezierCurveTo(cx + W * 0.40, py + H * 0.26, cx + r, midY - H * 0.10, cx + r, midY);
+    // 底部半圆：从右 (0) 顺时针到左 (π)，经过最底点
+    context.arc(cx, midY, r, 0, Math.PI, false);
+    // 左侧贝塞尔：从半圆左端回到尖顶
+    context.bezierCurveTo(cx - r, midY - H * 0.10, cx - W * 0.40, py + H * 0.26, cx, tipY);
     context.closePath();
     context.fill();
     context.stroke();
