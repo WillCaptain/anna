@@ -614,13 +614,20 @@
                   </svg>
                   <span data-i18n="s.badge">警徽</span>
                 </button>
-                <button class="shape-item" data-tool="camera" title="摄像头">
+                <button class="shape-item" data-tool="camera" title="相机">
                   <svg viewBox="0 0 24 24" fill="none">
-                    <path d="M4 8h12l3 3v5H4V8z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                    <circle cx="11" cy="13.5" r="2.5" stroke="currentColor" stroke-width="1.6"/>
-                    <path d="M19 11l3-2v6l-3-2" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                    <!-- 机身 -->
+                    <rect x="2" y="8" width="20" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                    <!-- 顶部取景器凸包 -->
+                    <path d="M7 8V5.5h5V8" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                    <!-- 快门按钮 -->
+                    <circle cx="19.5" cy="7.5" r="1.2" fill="currentColor"/>
+                    <!-- 镜头外环 -->
+                    <circle cx="12" cy="14.5" r="3.5" stroke="currentColor" stroke-width="1.6"/>
+                    <!-- 镜头内圆 -->
+                    <circle cx="12" cy="14.5" r="1.6" fill="currentColor"/>
                   </svg>
-                  <span data-i18n="s.camera">摄像头</span>
+                  <span data-i18n="s.camera">相机</span>
                 </button>
                 <button class="shape-item" data-tool="cctv" title="监控球机">
                   <svg viewBox="0 0 24 24" fill="none">
