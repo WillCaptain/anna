@@ -1,0 +1,10 @@
+server:
+  port: 8085
+  tomcat:
+    accept-count: 1000
+    threads:
+      max: 300
+      min-spare: 300
+spring:
+  codec:
+    max-in-memory-size: 10MB

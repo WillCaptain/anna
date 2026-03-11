@@ -740,6 +740,108 @@ input[type="range"] {
   text-align: right;
 }
 
+/* 属性面板 — 分组标题 */
+.prop-section {
+  margin-bottom: 16px;
+}
+
+.prop-section-hd {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* 位置/尺寸两列 */
+.prop-row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.prop-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.prop-field label {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+input.prop-num {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 11px;
+  padding: 4px 6px;
+  outline: none;
+  -moz-appearance: textfield;
+}
+input.prop-num::-webkit-outer-spin-button,
+input.prop-num::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+input.prop-num:focus {
+  border-color: var(--accent);
+}
+
+/* 对齐按钮 */
+.prop-align-row {
+  display: flex;
+  gap: 4px;
+}
+
+.prop-align-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.prop-align-btn:hover {
+  background: var(--surface3);
+  color: var(--text);
+}
+
+.prop-align-btn.active {
+  background: var(--active);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+input.prop-num-sm {
+  width: 52px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 11px;
+  padding: 4px 6px;
+  outline: none;
+  -moz-appearance: textfield;
+}
+input.prop-num-sm::-webkit-outer-spin-button,
+input.prop-num-sm::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+input.prop-num-sm:focus {
+  border-color: var(--accent);
+}
+
 /* Status bar */
 #statusbar {
   height: var(--status-h);

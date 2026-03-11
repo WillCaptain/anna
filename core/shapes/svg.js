@@ -17,18 +17,25 @@ let svg = (id, x, y, width, height, parent) => {
     self.type = "svg";
     self.borderWidth = 0;
     self.backColor = "transparent";
+
     self.setSvg = (content) => {
         self.text = content;
         self.invalidate();
         self.drawer.init();
     };
 
+    /** 返回当前 SVG 内容；若尚未设置则返回内置示例 */
+    self.getSvg = () => self.text || svgExample;
+
     self.addDetection(["backColor", "borderColor", "borderWidth"], (property, value, preValue) => {
         self.setSvg(self.getSvg());
     });
-    self.getSvg = () => {
-        return svgExample;
+
+    // 新创建时显示内置示例 SVG
+    if (!self.text) {
+        self.text = svgExample;
     }
+
     return self;
 };
 

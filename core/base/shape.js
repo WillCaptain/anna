@@ -275,9 +275,8 @@ const shape = (id, x, y, width, height, parent, drawer) => {
     if (self.page.mouseInShape === self) {
       color = self.mouseInBorderColor;
     }
-    if (self.isFocused) {
-      color = self.focusBorderColor;
-    }
+    // 选中态不再覆盖边框色，保证属性面板修改后能实时预览
+    // 选中状态由 canvas 虚线框（focusFrameColor）和 resize 手柄体现
     return color;
   };
 
@@ -295,17 +294,13 @@ const shape = (id, x, y, width, height, parent, drawer) => {
     if (self.page.mouseInShape === self) {
       color = self.mouseInFontColor;
     }
-    if (self.isFocused) {
-      color = self.focusFontColor;
-    }
+    // 选中态不覆盖字体色，保持实时预览
     return color;
   };
 
   self.getBackColor = () => {
     let color = self.backColor;
-    if (self.isFocused) {
-      color = self.focusBackColor;
-    }
+    // 选中态不覆盖背景色，保持实时预览
     if (self.isLocked()) {
       color = 'rgba(255,215,0,0.2)';
     }
