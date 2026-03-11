@@ -24,6 +24,7 @@ import {
 } from '../../common/const.js';
 import {configurationFactory} from '../configuration/configurationFactory.js';
 import {layoutCommand} from '../history/commands.js';
+import {baseDisplayFields} from '../properties/shapeDisplayFields.js';
 import {lockRegion} from '../interaction/hitRegion.js';
 import {imageSaver} from '../shapes/thumb.js';
 import {inPolygon} from '../../common/graphics.js';
@@ -1094,6 +1095,16 @@ const shape = (id, x, y, width, height, parent, drawer) => {
   self.containerChanged = (preValue, value) => self.runCode('containerChangedCode');
 
   self.textChanged = (value, preValue) => self.runCode('textChangedCode');
+
+  /**
+   * 返回该形状在属性面板中应展示的字段描述符列表。
+   *
+   * 每个条目是一个 groupField（包含子字段），渲染器根据 meta 信息决定控件类型。
+   * 子类可覆盖此方法以增删字段，或返回完全不同的字段集合。
+   *
+   * @returns {Array} groupField 描述符数组
+   */
+  self.getDisplayFields = () => baseDisplayFields();
 
   self.getRotateAble = () => self.rotateAble && self.getContainer().dockMode === DOCK_MODE.NONE && self.pDock === PARENT_DOCK_MODE.NONE;
 

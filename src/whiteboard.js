@@ -10,6 +10,7 @@
 import {graph} from '@anna/core/base/graph.js';
 import {EVENT_TYPE} from '@anna/common/const.js';
 import {t} from './i18n.js';
+import {initPropertiesPanel, syncPanelFromShapes} from './propertiesPanel.js';
 
 // ─── 主题配色方案 ─────────────────────────────────────────────────────────────
 const CANVAS_THEMES = [
@@ -208,24 +209,6 @@ const statusTool     = $('status-tool');
 const statusShapes   = $('status-shapes');
 const statusSelected = $('status-selected');
 const propsPanel     = $('properties-panel');
-// 外观
-const propFill       = $('prop-fill');
-const propAlpha      = $('prop-alpha');
-const propBorder     = $('prop-border');
-const propBorderW    = $('prop-border-w');
-const propRadius     = $('prop-radius');
-const alphaVal       = $('alpha-val');
-const borderwVal     = $('borderw-val');
-const radiusVal      = $('radius-val');
-// 位置与尺寸
-const propX          = $('prop-x');
-const propY          = $('prop-y');
-const propW          = $('prop-w');
-const propH          = $('prop-h');
-// 文字
-const propFontColor  = $('prop-font-color');
-const propFontSize   = $('prop-font-size');
-const alignBtns      = ['align-left', 'align-center', 'align-right'].map($);
 
 // ─── 引擎初始化 ───────────────────────────────────────────────────────────────
 
@@ -409,71 +392,7 @@ function fitScreen() {
     zoomLabel.textContent = Math.round(currentZoom * 100) + '%';
 }
 
-// ─── 属性面板 ─────────────────────────────────────────────────────────────────
-
-const toHexColor = (color, fallback) =>
-    (color && /^#[0-9a-fA-F]{6}$/.test(color)) ? color : (fallback ?? '#888888');
-
-function syncPropsToShape() {
-    if (!annPage) return;
-    const focused = annPage.getFocusedShapes();
-    if (!focused || focused.length === 0) return;
-
-    const fill      = propFill.value;
-    const alpha     = parseInt(propAlpha.value) / 100;
-    const border    = propBorder.value;
-    const bw        = parseFloat(propBorderW.value);
-    const radius    = parseInt(propRadius.value);
-    const x         = parseInt(propX.value);
-    const y         = parseInt(propY.value);
-    const w         = parseInt(propW.value);
-    const h         = parseInt(propH.value);
-    const fontColor = propFontColor.value;
-    const fontSize  = parseInt(propFontSize.value);
-
-    annGraph.change(() => {
-        focused.forEach(s => {
-            s.backColor    = fill;
-            s.globalAlpha  = alpha;
-            s.borderColor  = border;
-            s.borderWidth  = bw;
-            s.cornerRadius = radius;
-            if (!isNaN(x)) s.x = x;
-            if (!isNaN(y)) s.y = y;
-            if (!isNaN(w) && w > 0) s.width  = w;
-            if (!isNaN(h) && h > 0) s.height = h;
-            s.fontColor    = fontColor;
-            if (!isNaN(fontSize) && fontSize > 0) s.fontSize = fontSize;
-            s.invalidate?.();
-        });
-    });
-}
-
-function syncPropsFromShape(shapes) {
-    if (!shapes || shapes.length === 0) return;
-    const s = shapes[0];
-    // 外观
-    propFill.value      = toHexColor(s.backColor,   THEME.shapeBackColor);
-    propBorder.value    = toHexColor(s.borderColor, THEME.shapeBorderColor);
-    propAlpha.value     = Math.round((s.globalAlpha ?? 1) * 100);
-    propBorderW.value   = s.borderWidth   ?? 1;
-    propRadius.value    = s.cornerRadius  ?? 4;
-    alphaVal.textContent   = propAlpha.value + '%';
-    borderwVal.textContent = Number(propBorderW.value).toFixed(1);
-    radiusVal.textContent  = propRadius.value;
-    // 位置与尺寸
-    propX.value = Math.round(s.x ?? 0);
-    propY.value = Math.round(s.y ?? 0);
-    propW.value = Math.round(s.width  ?? 100);
-    propH.value = Math.round(s.height ?? 60);
-    // 文字
-    propFontColor.value = toHexColor(s.fontColor, '#333333');
-    propFontSize.value  = s.fontSize ?? 12;
-    // 对齐按钮高亮
-    const alignMap = { left: 0, center: 1, right: 2 };
-    const alignIdx = alignMap[s.hAlign] ?? 1;
-    alignBtns.forEach((btn, i) => btn?.classList.toggle('active', i === alignIdx));
-}
+// ─── 属性面板（由 propertiesPanel.js 动态渲染，无需在此写 sync 函数）────────
 
 // ─── 状态栏 ───────────────────────────────────────────────────────────────────
 
@@ -568,42 +487,6 @@ function bindButtons() {
     btnZoomOut.addEventListener('click', () => setZoom(-ZOOM_STEP));
     btnZoomFit.addEventListener('click', fitScreen);
     btnTheme && btnTheme.addEventListener('click', cycleTheme);
-
-    // 外观
-    propFill.addEventListener('input',    syncPropsToShape);
-    propBorder.addEventListener('input',  syncPropsToShape);
-    propAlpha.addEventListener('input', () => {
-        alphaVal.textContent = propAlpha.value + '%';
-        syncPropsToShape();
-    });
-    propBorderW.addEventListener('input', () => {
-        borderwVal.textContent = Number(propBorderW.value).toFixed(1);
-        syncPropsToShape();
-    });
-    propRadius.addEventListener('input', () => {
-        radiusVal.textContent = propRadius.value;
-        syncPropsToShape();
-    });
-    // 位置与尺寸（失焦时应用，避免打字过程中频繁刷新）
-    [propX, propY, propW, propH].forEach(el => {
-        el.addEventListener('change', syncPropsToShape);
-    });
-    // 文字
-    propFontColor.addEventListener('input', syncPropsToShape);
-    propFontSize.addEventListener('change', syncPropsToShape);
-    // 对齐按钮
-    const alignValues = ['left', 'center', 'right'];
-    alignBtns.forEach((btn, i) => {
-        btn?.addEventListener('click', () => {
-            if (!annPage) return;
-            const focused = annPage.getFocusedShapes();
-            if (!focused?.length) return;
-            alignBtns.forEach((b, j) => b?.classList.toggle('active', j === i));
-            annGraph.change(() => {
-                focused.forEach(s => { s.hAlign = alignValues[i]; s.invalidate?.(); });
-            });
-        });
-    });
 }
 
 // ─── 导出：白板初始化入口 ─────────────────────────────────────────────────────
@@ -615,11 +498,14 @@ export async function initWhiteboard() {
     try {
         const {g} = await initEngine();
 
+        // 属性面板挂载（在引擎就绪后，annGraph 已赋值）
+        initPropertiesPanel(propsPanel, annGraph, () => annPage);
+
         g.addEventListener(EVENT_TYPE.FOCUSED_SHAPES_CHANGE, shapes => {
             const focused = Array.isArray(shapes) ? shapes : (shapes ? [shapes] : []);
             if (focused.length > 0) {
                 propsPanel.classList.remove('hidden');
-                syncPropsFromShape(focused);
+                syncPanelFromShapes(focused);
             } else {
                 propsPanel.classList.add('hidden');
             }
