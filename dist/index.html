@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Anna</title>
-  <script type="module" crossorigin src="/assets/index-BBRNZOuq.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-BiM19gIh.css">
+  <script type="module" crossorigin src="/assets/index-CqODL_AO.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CpUVTHHb.css">
 </head>
 <body>
 
@@ -23,15 +23,15 @@
       <span class="brand-name">Anna</span>
     </div>
     <nav class="home-nav">
-      <a href="#" class="nav-link">文档</a>
-      <a href="#" class="nav-link">关于</a>
+      <a href="#" class="nav-link" data-i18n="nav.docs">文档</a>
+      <a href="#" class="nav-link" data-i18n="nav.about">关于</a>
     </nav>
   </header>
 
   <main class="home-main">
     <div class="home-hero">
-      <h1 class="hero-title">创造，无处不在</h1>
-      <p class="hero-sub">选择一个工作区，开始你的创作</p>
+      <h1 class="hero-title" data-i18n="hero.title">创造，无处不在</h1>
+      <p class="hero-sub" data-i18n="hero.sub">选择一个工作区，开始你的创作</p>
     </div>
 
     <div class="product-grid">
@@ -47,10 +47,10 @@
           </svg>
         </div>
         <div class="card-body">
-          <span class="card-title">白板</span>
-          <span class="card-desc">自由绘制，无限画布，形状与连线</span>
+          <span class="card-title" data-i18n="wb.name">白板</span>
+          <span class="card-desc" data-i18n="wb.desc">自由绘制，无限画布，形状与连线</span>
         </div>
-        <span class="card-badge available-badge">立即使用</span>
+        <span class="card-badge available-badge" data-i18n="wb.badge">立即使用</span>
       </button>
 
       <!-- Document — 即将推出 -->
@@ -65,10 +65,10 @@
           </svg>
         </div>
         <div class="card-body">
-          <span class="card-title">文档</span>
-          <span class="card-desc">智能排版，结构化内容创作</span>
+          <span class="card-title" data-i18n="doc.name">文档</span>
+          <span class="card-desc" data-i18n="doc.desc">智能排版，结构化内容创作</span>
         </div>
-        <span class="card-badge soon-badge">即将推出</span>
+        <span class="card-badge soon-badge" data-i18n="soon">即将推出</span>
       </div>
 
       <!-- Presentation — 即将推出 -->
@@ -82,10 +82,10 @@
           </svg>
         </div>
         <div class="card-body">
-          <span class="card-title">演示</span>
-          <span class="card-desc">精美幻灯片，动效演示</span>
+          <span class="card-title" data-i18n="ppt.name">演示</span>
+          <span class="card-desc" data-i18n="ppt.desc">精美幻灯片，动效演示</span>
         </div>
-        <span class="card-badge soon-badge">即将推出</span>
+        <span class="card-badge soon-badge" data-i18n="soon">即将推出</span>
       </div>
 
       <!-- Spreadsheet — 即将推出 -->
@@ -101,17 +101,17 @@
           </svg>
         </div>
         <div class="card-body">
-          <span class="card-title">表格</span>
-          <span class="card-desc">数据整理，公式计算</span>
+          <span class="card-title" data-i18n="sheet.name">表格</span>
+          <span class="card-desc" data-i18n="sheet.desc">数据整理，公式计算</span>
         </div>
-        <span class="card-badge soon-badge">即将推出</span>
+        <span class="card-badge soon-badge" data-i18n="soon">即将推出</span>
       </div>
 
     </div><!-- /product-grid -->
   </main>
 
   <footer class="home-footer">
-    <span>© 2026 12th.ai Studio</span>
+    <span data-i18n="footer">© 2026 12th.ai Studio</span>
   </footer>
 
 </div><!-- /#home-view -->
@@ -174,109 +174,710 @@
       </button>
     </div>
 
+    <div class="toolbar-divider"></div>
+
+    <!-- 主题切换 -->
+    <button class="icon-btn" id="btn-theme" title="切换画布主题">
+      <svg viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </button>
+
   </header>
 
   <!-- ─── 主体区域 ─── -->
   <main id="main">
 
-    <!-- ─── 左侧形状面板（Outlook 风格三页签） ─── -->
+    <!-- ─── 左侧形状面板（Outlook 风格分组） ─── -->
     <nav id="shape-panel">
       <!-- 页签栏 -->
       <div id="shape-tabs">
-        <button class="shape-tab active" data-cat="basic" title="基础形状">
-          <svg viewBox="0 0 24 24" width="18" height="18">
-            <rect x="3" y="5" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.8" fill="none"/>
-            <ellipse cx="17" cy="8.5" rx="4" ry="3.5" stroke="currentColor" stroke-width="1.8" fill="none"/>
-            <path d="M3 19l4-7 4 7H3z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
-            <path d="M14 17l3-5 3 5h-6z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
+        <button class="shape-tab active" data-cat="shapes" title="形状" data-i18n-title="tab.shapes">
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <rect x="2" y="4" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.8" fill="none"/>
+            <ellipse cx="17" cy="7.5" rx="4" ry="3.5" stroke="currentColor" stroke-width="1.8" fill="none"/>
+            <path d="M3 19l4-6 4 6H3z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
+            <path d="M14 18l3-5 3 5h-6z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
           </svg>
-          <span>形状</span>
+          <span data-i18n="tab.shapes">形状</span>
         </button>
-        <button class="shape-tab" data-cat="lines" title="线条">
-          <svg viewBox="0 0 24 24" width="18" height="18">
-            <path d="M4 20L20 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-            <circle cx="4" cy="20" r="2" fill="currentColor"/>
-            <circle cx="20" cy="4" r="2" fill="currentColor"/>
-            <path d="M3 13c3-2 6-3 9-1s5 3 9 1" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+        <button class="shape-tab" data-cat="lines" title="线条" data-i18n-title="tab.lines">
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path d="M3 18L10 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <circle cx="3" cy="18" r="2" fill="currentColor"/>
+            <circle cx="10" cy="6" r="2" fill="currentColor"/>
+            <path d="M13 17C14 12 18 8 21 8" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            <path d="M19 6L21 8L19 10" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <span>线条</span>
+          <span data-i18n="tab.lines">线条</span>
         </button>
-        <button class="shape-tab" data-cat="arrows" title="箭头与更多">
-          <svg viewBox="0 0 24 24" width="18" height="18">
-            <path d="M5 12h14M14 7l5 5-5 5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <button class="shape-tab" data-cat="flow" title="流程" data-i18n-title="tab.flow">
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <rect x="2" y="3" width="9" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/>
+            <rect x="13" y="14" width="9" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8" fill="none"/>
+            <path d="M7 10L7 14L17 14" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            <path d="M15 12L17 14L15 16" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <span>箭头</span>
+          <span data-i18n="tab.flow">流程</span>
+        </button>
+        <button class="shape-tab" data-cat="mind" title="脑图" data-i18n-title="tab.mind">
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8" fill="none"/>
+            <line x1="12" y1="9" x2="12" y2="3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="14.6" y1="9.5" x2="20" y2="5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="15" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="12" y1="15" x2="12" y2="21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="9.4" y1="14.5" x2="4" y2="19" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="9" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <span data-i18n="tab.mind">脑图</span>
+        </button>
+        <!-- 图标库 tab -->
+        <button class="shape-tab" data-cat="icons" title="图标库" data-i18n-title="tab.icons">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+            <rect x="3"  y="3"  width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/>
+            <rect x="14" y="3"  width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/>
+            <rect x="3"  y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/>
+            <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+          <span data-i18n="tab.icons">图标</span>
         </button>
       </div>
 
-      <!-- 形状网格 -->
+      <!-- 形状内容区 -->
       <div id="shape-content">
 
-        <!-- 基础形状 -->
-        <div class="shape-category active" data-cat="basic">
-          <div class="shape-grid">
-            <button class="shape-item" data-tool="rectangle" title="矩形 (R)">
-              <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>
-              <span>矩形</span>
+        <!-- ── 形状 tab ── -->
+        <div class="shape-category active" data-cat="shapes">
+
+          <!-- 基础形状分组 -->
+          <div class="shape-group">
+            <button class="shape-group-header">
+              <span data-i18n="grp.basic">基础形状</span>
+              <svg class="shape-group-chevron" viewBox="0 0 10 10"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
-            <button class="shape-item" data-tool="ellipse" title="椭圆 (E)">
-              <svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="7" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>
-              <span>椭圆</span>
-            </button>
-            <button class="shape-item" data-tool="triangle" title="三角形 (T)">
-              <svg viewBox="0 0 24 24"><path d="M12 3L22 20H2L12 3z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
-              <span>三角</span>
-            </button>
-            <button class="shape-item" data-tool="diamond" title="菱形 (D)">
-              <svg viewBox="0 0 24 24"><path d="M12 2L22 12L12 22L2 12L12 2z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
-              <span>菱形</span>
-            </button>
-            <button class="shape-item" data-tool="parallelogram" title="平行四边形">
-              <svg viewBox="0 0 24 24"><path d="M6 18L10 6h8L18 18H6z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
-              <span>平行</span>
-            </button>
-            <button class="shape-item" data-tool="pentagram" title="五角星">
-              <svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
-              <span>五角星</span>
-            </button>
-            <button class="shape-item" data-tool="roundedCallout" title="圆角气泡">
-              <svg viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H8l-4 4V17a2 2 0 01-1-2V5z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
-              <span>气泡</span>
-            </button>
-            <button class="shape-item" data-tool="regularPentagonal" title="正五边形">
-              <svg viewBox="0 0 24 24"><path d="M12 2l8.5 6.2-3.2 9.8H6.7L3.5 8.2 12 2z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
-              <span>五边形</span>
-            </button>
+            <div class="shape-group-body">
+              <div class="shape-grid">
+                <button class="shape-item" data-tool="rectangle" title="矩形 (R)">
+                  <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>
+                  <span data-i18n="s.rectangle">矩形</span>
+                </button>
+                <button class="shape-item" data-tool="ellipse" title="椭圆 (E)">
+                  <svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="7" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>
+                  <span data-i18n="s.ellipse">椭圆</span>
+                </button>
+                <button class="shape-item" data-tool="triangle" title="三角形 (T)">
+                  <svg viewBox="0 0 24 24"><path d="M12 3L22 20H2L12 3z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
+                  <span data-i18n="s.triangle">三角</span>
+                </button>
+                <button class="shape-item" data-tool="diamond" title="菱形 (D)">
+                  <svg viewBox="0 0 24 24"><path d="M12 2L22 12L12 22L2 12L12 2z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
+                  <span data-i18n="s.diamond">菱形</span>
+                </button>
+                <button class="shape-item" data-tool="parallelogram" title="平行四边形 (P)">
+                  <svg viewBox="0 0 24 24"><path d="M6 18L10 6h8L18 18H6z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
+                  <span data-i18n="s.parallelogram">平行</span>
+                </button>
+                <button class="shape-item" data-tool="pentagram" title="五角星">
+                  <svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
+                  <span data-i18n="s.pentagram">五角星</span>
+                </button>
+                <button class="shape-item" data-tool="roundedCallout" title="气泡框">
+                  <svg viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H8l-4 4V17a2 2 0 01-1-2V5z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
+                  <span data-i18n="s.callout">气泡</span>
+                </button>
+                <button class="shape-item" data-tool="regularPentagonal" title="正五边形">
+                  <svg viewBox="0 0 24 24"><path d="M12 2l8.5 6.2-3.2 9.8H6.7L3.5 8.2 12 2z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
+                  <span data-i18n="s.pentagon">五边形</span>
+                </button>
+              </div>
+            </div>
           </div>
+
+          <!-- 扩展形状分组（plugins/basic） -->
+          <div class="shape-group">
+            <button class="shape-group-header">
+              <span data-i18n="grp.extended">扩展形状</span>
+              <svg class="shape-group-chevron" viewBox="0 0 10 10"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="shape-group-body">
+              <div class="shape-grid">
+                <button class="shape-item" data-tool="hexagon" title="六边形">
+                  <svg viewBox="0 0 24 24"><path d="M12 3L20.5 7.5L20.5 16.5L12 21L3.5 16.5L3.5 7.5Z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
+                  <span data-i18n="s.hexagon">六边形</span>
+                </button>
+                <button class="shape-item" data-tool="octagon" title="八边形">
+                  <svg viewBox="0 0 24 24"><path d="M9 3H15L21 9V15L15 21H9L3 15V9Z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
+                  <span data-i18n="s.octagon">八边形</span>
+                </button>
+                <button class="shape-item" data-tool="cross" title="十字形">
+                  <svg viewBox="0 0 24 24"><path d="M9 3H15V9H21V15H15V21H9V15H3V9H9V3Z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
+                  <span data-i18n="s.cross">十字</span>
+                </button>
+                <button class="shape-item" data-tool="trapezoid" title="梯形">
+                  <svg viewBox="0 0 24 24"><path d="M5 7L19 7L22 17L2 17Z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
+                  <span data-i18n="s.trapezoid">梯形</span>
+                </button>
+                <button class="shape-item" data-tool="chevron" title="旗形">
+                  <svg viewBox="0 0 24 24"><path d="M2 7H16L22 12L16 17H2L8 12Z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
+                  <span data-i18n="s.chevron">旗形</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 标记符号分组 -->
+          <div class="shape-group">
+            <button class="shape-group-header">
+              <span data-i18n="grp.marks">标记符号</span>
+              <svg class="shape-group-chevron" viewBox="0 0 10 10"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="shape-group-body">
+              <div class="shape-grid">
+                <button class="shape-item" data-tool="checkmark" title="勾选">
+                  <svg viewBox="0 0 24 24"><path d="M2 13L9 20L22 5" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span data-i18n="s.checkmark">勾</span>
+                </button>
+                <button class="shape-item" data-tool="xmark" title="叉号">
+                  <svg viewBox="0 0 24 24"><path d="M5 5L19 19M19 5L5 19" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>
+                  <span data-i18n="s.xmark">叉</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 设备图标分组 -->
+          <div class="shape-group">
+            <button class="shape-group-header">
+              <span data-i18n="grp.devices">设备图标</span>
+              <svg class="shape-group-chevron" viewBox="0 0 10 10"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="shape-group-body">
+              <div class="shape-grid">
+                <button class="shape-item" data-tool="monitor" title="电脑显示器">
+                  <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="13" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M8 21h8M12 16v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <span data-i18n="s.monitor">电脑</span>
+                </button>
+                <button class="shape-item" data-tool="phone" title="手机">
+                  <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="3" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="12" cy="18" r="1" fill="currentColor"/><path d="M9 5h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                  <span data-i18n="s.phone">手机</span>
+                </button>
+                <button class="shape-item" data-tool="tablet" title="平板 / iPad">
+                  <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="12" cy="18.5" r="1" fill="currentColor"/></svg>
+                  <span data-i18n="s.tablet">平板</span>
+                </button>
+                <button class="shape-item" data-tool="database" title="数据库">
+                  <svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>
+                  <span data-i18n="s.database">数据库</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 其他图标分组 -->
+          <div class="shape-group">
+            <button class="shape-group-header">
+              <span data-i18n="grp.misc">其他图标</span>
+              <svg class="shape-group-chevron" viewBox="0 0 10 10"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="shape-group-body">
+              <div class="shape-grid">
+                <button class="shape-item" data-tool="document" title="文档">
+                  <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/><path d="M14 2v6h6M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                  <span data-i18n="s.document">文档</span>
+                </button>
+                <button class="shape-item" data-tool="tree" title="树">
+                  <svg viewBox="0 0 24 24"><path d="M12 2L20 14H4L12 2z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/><path d="M12 9L19 20H5L12 9z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/><path d="M10 20v3h4v-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span data-i18n="s.tree">树</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
         </div>
 
-        <!-- 线条 -->
+        <!-- ── 线条 tab ── -->
         <div class="shape-category" data-cat="lines">
-          <div class="shape-grid" id="tool-group-lines">
-            <button class="shape-item" data-tool="line" title="连接线 (L)">
-              <svg viewBox="0 0 24 24"><path d="M5 19L19 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="5" cy="19" r="2.5" fill="currentColor"/><circle cx="19" cy="5" r="2.5" fill="currentColor"/></svg>
-              <span>连线</span>
+
+          <!-- 连接线分组 -->
+          <div class="shape-group">
+            <button class="shape-group-header">
+              <span data-i18n="grp.connectors">连接线</span>
+              <svg class="shape-group-chevron" viewBox="0 0 10 10"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
-            <button class="shape-item" data-tool="freeLine" title="自由画笔 (F)">
-              <svg viewBox="0 0 24 24"><path d="M3 17c2-4 5-8 9-9 2-.5 4 .5 5 2s0 4-2 5c-3 1.5-6-1-4-4" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
-              <span>画笔</span>
+            <div class="shape-group-body">
+              <div class="shape-grid">
+                <button class="shape-item" data-tool="line" title="连接线 (L)">
+                  <svg viewBox="0 0 24 24"><path d="M5 19L19 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="5" cy="19" r="2.5" fill="currentColor"/><circle cx="19" cy="5" r="2.5" fill="currentColor"/></svg>
+                  <span data-i18n="s.line">连线</span>
+                </button>
+                <button class="shape-item" data-tool="freeLine" title="自由画笔 (F)">
+                  <svg viewBox="0 0 24 24"><path d="M3 17c2-4 5-8 9-9 2-.5 4 .5 5 2s0 4-2 5c-3 1.5-6-1-4-4" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
+                  <span data-i18n="s.freeLine">画笔</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 箭头分组 -->
+          <div class="shape-group">
+            <button class="shape-group-header">
+              <span data-i18n="grp.arrows">箭头</span>
+              <svg class="shape-group-chevron" viewBox="0 0 10 10"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="shape-group-body">
+              <div class="shape-grid">
+                <button class="shape-item" data-tool="rightArrow" title="右箭头">
+                  <svg viewBox="0 0 24 24"><path d="M4 10h12V7l4 5-4 5v-3H4v-4z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
+                  <span data-i18n="s.rightArrow">右箭头</span>
+                </button>
+                <button class="shape-item" data-tool="bottomArrow" title="下箭头">
+                  <svg viewBox="0 0 24 24"><path d="M10 4v12H7l5 4 5-4h-3V4h-4z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
+                  <span data-i18n="s.bottomArrow">下箭头</span>
+                </button>
+                <button class="shape-item" data-tool="leftAndRightArrow" title="双向箭头">
+                  <svg viewBox="0 0 24 24"><path d="M7 8L2 12L7 16L7 13L17 13L17 16L22 12L17 8L17 11L7 11Z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
+                  <span data-i18n="s.lrArrow">双向</span>
+                </button>
+                <button class="shape-item" data-tool="dovetailArrow" title="燕尾箭头">
+                  <svg viewBox="0 0 24 24"><path d="M3 7L9 12L3 17L13 17L20 12L13 7Z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
+                  <span data-i18n="s.dovetail">燕尾</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ── 流程 tab ── -->
+        <div class="shape-category" data-cat="flow">
+          <div class="cat-empty">
+            <svg viewBox="0 0 24 24" fill="none">
+              <rect x="2" y="3" width="9" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+              <rect x="13" y="14" width="9" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M7 10L7 14L17 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M15 12L17 14L15 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span data-i18n="cat.empty">即将推出</span>
           </div>
         </div>
 
-        <!-- 箭头 -->
-        <div class="shape-category" data-cat="arrows">
-          <div class="shape-grid" id="tool-group-arrows">
-            <button class="shape-item" data-tool="rightArrow" title="右箭头">
-              <svg viewBox="0 0 24 24"><path d="M4 10h12V7l4 5-4 5v-3H4v-4z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
-              <span>右箭头</span>
+        <!-- ── 脑图 tab ── -->
+        <div class="shape-category" data-cat="mind">
+          <div class="shape-group">
+            <button class="shape-group-header">
+              <span data-i18n="grp.mind">思维导图</span>
+              <svg class="shape-group-chevron" viewBox="0 0 10 10"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
-            <button class="shape-item" data-tool="bottomArrow" title="下箭头">
-              <svg viewBox="0 0 24 24"><path d="M10 4v12H7l5 4 5-4h-3V4h-4z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
-              <span>下箭头</span>
-            </button>
+            <div class="shape-group-body">
+              <div class="shape-grid">
+
+                <!-- mind map container -->
+                <button class="shape-item" data-tool="mind" title="思维导图" data-i18n-title="tool.mind">
+                  <svg viewBox="0 0 36 36" fill="none">
+                    <!-- center topic -->
+                    <rect x="11" y="14" width="14" height="8" rx="2" stroke="currentColor" stroke-width="1.4" fill="currentColor" fill-opacity="0.12"/>
+                    <!-- right branches -->
+                    <line x1="25" y1="18" x2="29" y2="14" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                    <rect x="29" y="11" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+                    <line x1="25" y1="18" x2="29" y2="22" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                    <rect x="29" y="19" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+                    <!-- left branches -->
+                    <line x1="11" y1="18" x2="7" y2="14" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                    <rect x="1" y="11" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+                    <line x1="11" y1="18" x2="7" y2="22" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                    <rect x="1" y="19" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+                  </svg>
+                  <span data-i18n="s.mind">脑图</span>
+                </button>
+
+              </div>
+              <!-- keyboard shortcuts hint -->
+              <p class="shape-hint" data-i18n="mind.hint">Enter 新增节点 · Ctrl+M 切换布局</p>
+            </div>
           </div>
         </div>
+
+        <!-- ── 图标库 tab ── -->
+        <div class="shape-category" data-cat="icons">
+
+          <!-- 安全与司法 -->
+          <div class="shape-group">
+            <button class="shape-group-header">
+              <span data-i18n="grp.icon.security">安全与司法</span>
+              <svg class="shape-group-chevron" viewBox="0 0 10 10"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="shape-group-body">
+              <div class="shape-grid">
+                <button class="shape-item" data-tool="key" title="钥匙">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="8" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/>
+                    <circle cx="8" cy="12" r="2" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M13 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M19 10v2M17 11v2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.key">钥匙</span>
+                </button>
+                <button class="shape-item" data-tool="padlock" title="锁（关）">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M8 11V7a4 4 0 018 0v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <circle cx="12" cy="16" r="1.5" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M12 17.5v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.padlock">锁</span>
+                </button>
+                <button class="shape-item" data-tool="padlockOpen" title="锁（开）">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M8 11V7a4 4 0 018 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <circle cx="12" cy="16" r="1.5" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M12 17.5v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.padlockOpen">开锁</span>
+                </button>
+                <button class="shape-item" data-tool="vault" title="保险柜">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <rect x="2" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                    <circle cx="11" cy="12" r="4" stroke="currentColor" stroke-width="1.6"/>
+                    <circle cx="11" cy="12" r="1.2" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M20 8h2M20 16h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.vault">保险柜</span>
+                </button>
+                <button class="shape-item" data-tool="shield" title="盾牌">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L3 6v6c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V6L12 2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span data-i18n="s.shield">盾牌</span>
+                </button>
+                <button class="shape-item" data-tool="gavel" title="法院锤">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M14 2L22 10L18 14L10 6L14 2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    <path d="M13 13L5 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                    <path d="M3 20h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.gavel">法院锤</span>
+                </button>
+                <button class="shape-item" data-tool="scales" title="法庭天秤">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 3v18M5 21h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M3 9h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M3 9l-2 5h4L3 9zM21 9l-2 5h4L21 9z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                  </svg>
+                  <span data-i18n="s.scales">天秤</span>
+                </button>
+                <button class="shape-item" data-tool="handcuffs" title="手铐">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="7" cy="12" r="4" stroke="currentColor" stroke-width="2"/>
+                    <circle cx="17" cy="12" r="4" stroke="currentColor" stroke-width="2"/>
+                    <path d="M11 12h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.handcuffs">手铐</span>
+                </button>
+                <button class="shape-item" data-tool="prisonBars" title="监狱栏杆">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <rect x="2" y="3" width="20" height="4" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
+                    <rect x="2" y="17" width="20" height="4" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
+                    <path d="M7 7v10M12 7v10M17 7v10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.prisonBars">牢笼</span>
+                </button>
+                <button class="shape-item" data-tool="policeLamp" title="法警灯">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <rect x="4" y="12" width="16" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M8 12V9a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M12 5V2M7 6.5L5 4.5M17 6.5L19 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.policeLamp">法警灯</span>
+                </button>
+                <button class="shape-item" data-tool="fingerprint" title="指纹">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                    <path d="M12 19C8.7 19 6 16.3 6 13s2.7-6 6-6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                    <path d="M12 16c-1.7 0-3-1.3-3-3s1.3-3 3-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                    <circle cx="12" cy="13" r="1" fill="currentColor"/>
+                    <path d="M22 6c0 5.5-3 10.5-7 14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                    <path d="M18 4c2 2.5 3 5.5 3 9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.fingerprint">指纹</span>
+                </button>
+                <button class="shape-item" data-tool="badge" title="警徽">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2l2.4 4.8L20 8l-4 4 1 5.5L12 15l-5 2.5L8 12 4 8l5.6-1.2L12 2z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                    <circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+                  </svg>
+                  <span data-i18n="s.badge">警徽</span>
+                </button>
+                <button class="shape-item" data-tool="camera" title="摄像头">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M4 8h12l3 3v5H4V8z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    <circle cx="11" cy="13.5" r="2.5" stroke="currentColor" stroke-width="1.6"/>
+                    <path d="M19 11l3-2v6l-3-2" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                  </svg>
+                  <span data-i18n="s.camera">摄像头</span>
+                </button>
+                <button class="shape-item" data-tool="cctv" title="监控球机">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M8 3h8v3H8z" rx="1" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                    <path d="M12 6v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                    <circle cx="12" cy="14" r="5" stroke="currentColor" stroke-width="1.8"/>
+                    <circle cx="13" cy="13.5" r="2" stroke="currentColor" stroke-width="1.4"/>
+                    <circle cx="13" cy="13.5" r="0.7" fill="currentColor"/>
+                  </svg>
+                  <span data-i18n="s.cctv">球机</span>
+                </button>
+                <button class="shape-item" data-tool="streetLight" title="路灯">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M8 22V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M8 8C8 5 10 3 14 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <rect x="12" y="3" width="5" height="4" rx="1.5" stroke="currentColor" stroke-width="1.7"/>
+                    <path d="M6 22h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.streetLight">路灯</span>
+                </button>
+                <button class="shape-item" data-tool="alarm" title="报警器">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="13" r="5" stroke="currentColor" stroke-width="1.8"/>
+                    <circle cx="12" cy="13" r="2" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M5 8C3.5 9.5 2.5 11.7 2.5 14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                    <path d="M19 8C20.5 9.5 21.5 11.7 21.5 14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                    <path d="M7.5 5C6 6.2 5 7.8 4.5 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M16.5 5C18 6.2 19 7.8 19.5 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M9 19h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.alarm">报警器</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 标志与符号 -->
+          <div class="shape-group">
+            <button class="shape-group-header">
+              <span data-i18n="grp.icon.symbols">标志与符号</span>
+              <svg class="shape-group-chevron" viewBox="0 0 10 10"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="shape-group-body">
+              <div class="shape-grid">
+                <button class="shape-item" data-tool="symbolMale" title="男标志">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="9" cy="14" r="5" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M13.5 9.5L19 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M15 4h4v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span data-i18n="s.symbolMale">男</span>
+                </button>
+                <button class="shape-item" data-tool="symbolFemale" title="女标志">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="8" r="5" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M12 13v8M9 18h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.symbolFemale">女</span>
+                </button>
+                <button class="shape-item" data-tool="droplet" title="水滴">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2C12 2 4 10 4 15a8 8 0 0016 0c0-5-8-13-8-13z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  </svg>
+                  <span data-i18n="s.droplet">水滴</span>
+                </button>
+                <button class="shape-item" data-tool="heart" title="心形">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 21C12 21 3 14 3 8a5 5 0 019-3 5 5 0 019 3c0 6-9 13-9 13z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  </svg>
+                  <span data-i18n="s.heart">心形</span>
+                </button>
+                <button class="shape-item" data-tool="thumbsUp" title="赞">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M7 22V11M2 11h5v11H2V11zM7 11l4-9a3 3 0 013 3v4h5a2 2 0 012 2l-1 5a2 2 0 01-2 2H7" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  </svg>
+                  <span data-i18n="s.thumbsUp">赞</span>
+                </button>
+                <button class="shape-item" data-tool="thumbsDown" title="踩">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M17 2v11M22 13h-5V2h5v11zM17 13l-4 9a3 3 0 01-3-3v-4H5a2 2 0 01-2-2l1-5a2 2 0 012-2h11" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  </svg>
+                  <span data-i18n="s.thumbsDown">踩</span>
+                </button>
+                <button class="shape-item" data-tool="cursorPointer" title="手指指向">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M9 3v10M9 3a3 3 0 016 0v5M15 8a3 3 0 016 0v6a8 8 0 01-8 8H9a7 7 0 01-7-7v-1a3 3 0 016 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span data-i18n="s.cursorPointer">指向</span>
+                </button>
+                <button class="shape-item" data-tool="info" title="Information">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M12 8v.5M12 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.info">Info</span>
+                </button>
+                <button class="shape-item" data-tool="warning" title="警告">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L2 22h20L12 2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    <path d="M12 9v5M12 17v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.warning">警告</span>
+                </button>
+                <button class="shape-item" data-tool="error" title="错误">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.error">错误</span>
+                </button>
+                <button class="shape-item" data-tool="question" title="疑问">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M9.5 9a2.5 2.5 0 015 0c0 2-2.5 2.5-2.5 5M12 18v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.question">疑问</span>
+                </button>
+                <button class="shape-item" data-tool="forbidden" title="禁止">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M4.93 4.93l14.14 14.14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.forbidden">禁止</span>
+                </button>
+                <button class="shape-item" data-tool="sparkle" title="火花">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2v4M12 18v4M4 12H2M22 12h-4M6.34 6.34L4.93 4.93M19.07 19.07l-1.41-1.41M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/>
+                  </svg>
+                  <span data-i18n="s.sparkle">火花</span>
+                </button>
+                <button class="shape-item" data-tool="radioactive" title="放射性">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/>
+                    <circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M12 9.5V4M9 11L4.5 7.5M15 11l4.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.radioactive">放射</span>
+                </button>
+                <button class="shape-item" data-tool="recycle" title="可循环">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M7 19H4.5a2 2 0 01-1.7-3L8 8M8 8l-2.5-3M8 8h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M14 5h2.5a2 2 0 011.7 3L13 16M13 16l2.5 3M13 16H8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span data-i18n="s.recycle">循环</span>
+                </button>
+                <button class="shape-item" data-tool="infinity" title="无限">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 12c-2-3-4-5-6-5a5 5 0 000 10c2 0 4-2 6-5z" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M12 12c2 3 4 5 6 5a5 5 0 000-10c-2 0-4 2-6 5z" stroke="currentColor" stroke-width="1.8"/>
+                  </svg>
+                  <span data-i18n="s.infinity">∞</span>
+                </button>
+                <button class="shape-item" data-tool="questionMark" title="问号">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M8 8a4 4 0 018 0c0 3-4 4-4 7M12 18v.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span data-i18n="s.questionMark">?</span>
+                </button>
+                <button class="shape-item" data-tool="exclamation" title="感叹号">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 3v13M12 20v.5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.exclamation">!</span>
+                </button>
+                <button class="shape-item" data-tool="checkCircle" title="圆圈勾">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M7 12l3.5 3.5L17 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span data-i18n="s.checkCircle">圆勾</span>
+                </button>
+                <button class="shape-item" data-tool="xCircle" title="圆圈叉">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.xCircle">圆叉</span>
+                </button>
+                <button class="shape-item" data-tool="star" title="星星">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2l3 7h7l-5.5 4.5 2 7L12 17l-6.5 3.5 2-7L2 9h7l3-7z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  </svg>
+                  <span data-i18n="s.star">星星</span>
+                </button>
+                <button class="shape-item" data-tool="wifi" title="WiFi">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M5 12.5C7.5 10 9.6 9 12 9s4.5 1 7 3.5M2 9c3-3 6.5-4.5 10-4.5S19 6 22 9M8.5 16c1-1 2.2-1.5 3.5-1.5s2.5.5 3.5 1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <circle cx="12" cy="20" r="1.5" fill="currentColor"/>
+                  </svg>
+                  <span data-i18n="s.wifi">WiFi</span>
+                </button>
+                <button class="shape-item" data-tool="bluetooth" title="蓝牙">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6.5 8L12 2l5.5 5.5L12 13l5.5 5.5L12 24V13L6.5 8z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  </svg>
+                  <span data-i18n="s.bluetooth">蓝牙</span>
+                </button>
+                <button class="shape-item" data-tool="copyright" title="版权">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M15 9.5a4 4 0 100 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.copyright">©</span>
+                </button>
+                <button class="shape-item" data-tool="trademark" title="商标">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M5 8h6M8 8v8M14 8h6M17 8v8M14 12h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.trademark">™</span>
+                </button>
+                <button class="shape-item" data-tool="registered" title="注册商标">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M9 16V8h4a3 3 0 010 6H9M13 14l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span data-i18n="s.registered">®</span>
+                </button>
+                <button class="shape-item" data-tool="biohazard" title="生化危险">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.6"/>
+                    <circle cx="12" cy="6"  r="3.5" stroke="currentColor" stroke-width="1.5"/>
+                    <circle cx="7"  cy="16" r="3.5" stroke="currentColor" stroke-width="1.5"/>
+                    <circle cx="17" cy="16" r="3.5" stroke="currentColor" stroke-width="1.5"/>
+                    <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                  </svg>
+                  <span data-i18n="s.biohazard">生化</span>
+                </button>
+                <button class="shape-item" data-tool="peace" title="和平">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M12 2v20M12 12l-7 4M12 12l7 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.peace">和平</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 未来分类（占位，逐步扩展） -->
+          <div class="icon-coming-grid">
+            <div class="icon-cat-badge" data-i18n="grp.icon.vehicles">车辆</div>
+            <div class="icon-cat-badge" data-i18n="grp.icon.animals">动物</div>
+            <div class="icon-cat-badge" data-i18n="grp.icon.devices">技术与电子</div>
+            <div class="icon-cat-badge" data-i18n="grp.icon.food">食品和饮料</div>
+            <div class="icon-cat-badge" data-i18n="grp.icon.sports">体育</div>
+            <div class="icon-cat-badge" data-i18n="grp.icon.weather">天气和季节</div>
+            <div class="icon-cat-badge" data-i18n="grp.icon.nature">自然和户外</div>
+            <div class="icon-cat-badge" data-i18n="grp.icon.medical">医学</div>
+            <div class="icon-cat-badge" data-i18n="grp.icon.business">商业</div>
+            <div class="icon-cat-badge" data-i18n="grp.icon.people">人员</div>
+            <div class="icon-cat-badge" data-i18n="grp.icon.home">居家</div>
+            <div class="icon-cat-badge" data-i18n="grp.icon.tools">工具与建筑</div>
+            <div class="icon-cat-badge" data-i18n="grp.icon.education">教育</div>
+            <div class="icon-cat-badge" data-i18n="grp.icon.faces">脸</div>
+            <div class="icon-cat-badge" data-i18n="grp.icon.holiday">假日</div>
+          </div>
+          <p class="icons-coming-label" data-i18n="icons.more">更多分类持续更新中…</p>
+
+        </div><!-- /icons cat -->
 
       </div><!-- /#shape-content -->
     </nav><!-- /#shape-panel -->
@@ -296,18 +897,18 @@
       <div class="prop-group">
         <label>填充色</label>
         <div class="color-picker-row">
-          <input type="color" id="prop-fill" value="#ffffff" />
+          <input type="color" id="prop-fill" value="#ffffff" /><!-- THEME.shapeBackColor -->
           <input type="range" id="prop-alpha" min="0" max="100" value="100" title="透明度" />
           <span class="prop-val" id="alpha-val">100%</span>
         </div>
       </div>
       <div class="prop-group">
         <label>边框色</label>
-        <input type="color" id="prop-border" value="#4f7bff" />
+        <input type="color" id="prop-border" value="#a8b2c4" /><!-- THEME.shapeBorderColor -->
       </div>
       <div class="prop-group">
         <label>边框宽</label>
-        <input type="range" id="prop-border-w" min="0" max="10" value="1" step="0.5" />
+        <input type="range" id="prop-border-w" min="0" max="10" value="1.5" step="0.5" /><!-- THEME.shapeBorderWidth -->
         <span class="prop-val" id="borderw-val">1</span>
       </div>
     </aside>

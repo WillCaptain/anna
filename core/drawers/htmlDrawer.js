@@ -480,12 +480,12 @@ const drawer = (shape, div, x = 0, y = 0) => {
    *
    * @param autoFocus 是否自动聚焦.
    */
-  self.renderText = (autoFocus) => {
+  self.renderText = () => {
     if (shape.hideText) {
       return;
     }
     const normalizedText = typeof shape.text === 'string' ? `<p>${shape.text}</p>` : shape.text;
-    self.renderTextByEditor(normalizedText, autoFocus);
+    self.renderTextByEditor(normalizedText);
   };
 
   /**
@@ -497,7 +497,7 @@ const drawer = (shape, div, x = 0, y = 0) => {
    *
    * @type {(function(*, *): void)|*}
    */
-  self.renderTextByEditor = (text, autoFocus) => {
+  self.renderTextByEditor = (text) => {
     const editor = self.getEditor();
     if (!editor) {
       if (self.text) {
@@ -505,9 +505,9 @@ const drawer = (shape, div, x = 0, y = 0) => {
       }
       return;
     }
+    // unmount 确保退出上一次编辑态，render 写入新内容
     editor.unmount();
     editor.render(text);
-    autoFocus && editor.focus();
     if (shape.placeholder) {
       editor.setPlaceholder(shape.placeholder);
     }

@@ -1247,19 +1247,14 @@ const setTextOperation = (shapeVal) => {
   shapeVal.italic = false;
 
   shapeVal.format = (key, value) => {
-    if (shapeVal.hideText) {
-      return;
-    }
-    const editor = shapeVal.drawer.getEditor();
-    editor.format(key, value);
+    if (shapeVal.hideText) return;
+    shapeVal.drawer.getEditor()?.format?.(key, value);
   };
 
   shapeVal.getFormatValue = (key) => {
-    if (shapeVal.hideText) {
-      return null;
-    }
+    if (shapeVal.hideText) return null;
     const editor = shapeVal.drawer.getEditor();
-    return editor.isFocused() ? editor.getFormatValue(key) : shapeVal.get(key);
+    return editor?.isFocused?.() ? editor.getFormatValue(key) : shapeVal.get(key);
   };
 
   /**
@@ -1315,32 +1310,26 @@ const setTextOperation = (shapeVal) => {
    * @param autoFocus 是否自动聚焦.
    * @return {*}
    */
-  shapeVal.beginEdit = function () {
-    let first = false;
-    return (x, y, autoFocus = false) => {
-      if (shapeVal.hideText || shapeVal.isEdit) {
-        return;
-      }
-
-      if (!first) {
-        shapeVal.drawer.renderTextByEditor(shapeVal.text, autoFocus);
-        first = true;
-      }
-      shapeVal.isEdit = true;
-      shapeVal.enableTextPointerEvents();
-    };
-  }();
+  shapeVal.beginEdit = (x, y, autoFocus = false) => {
+    if (shapeVal.hideText || shapeVal.isEdit) {
+      return;
+    }
+    // 将当前文字写入 DOM（展示态 → 编辑态），然后激活 contenteditable
+    shapeVal.drawer.renderTextByEditor(shapeVal.text);
+    shapeVal.drawer.getEditor?.()?.focus?.(autoFocus);
+    shapeVal.isEdit = true;
+    shapeVal.enableTextPointerEvents();
+  };
 
   /**
-   * 结束编辑
-   * 将编辑后value赋值shape
-   * huiz 2020
+   * 结束编辑：关闭 contenteditable，触发 edited 回调，禁用指针事件。
    */
   shapeVal.endEdit = () => {
     if (shapeVal.hideText || !shapeVal.isEdit) {
       return;
     }
     shapeVal.isEdit = false;
+    shapeVal.drawer.getEditor?.()?.unmount?.();
     shapeVal.edited(shapeVal.drawer.text);
     shapeVal.disableTextPointerEvents();
   };

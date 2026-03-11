@@ -95,12 +95,15 @@ const countdown = (id, x, y, width, height, parent) => {
         self.nowValue = -1;
     }
 
-    let beginEdit = self.beginEdit;
-    self.beginEdit = () => {
-        let editor = beginEdit.call(self);
-        editor.style.fontSize = self.get("fontSize") * self.width / self.originWidth + "px";
-        editor.style.background = "white";
-        editor.innerText = Math.round(self.initValue / 60);
+    const _superBeginEdit = self.beginEdit;
+    self.beginEdit = (x, y, autoFocus) => {
+        _superBeginEdit(x, y, autoFocus);
+        const el = self.drawer?.text;
+        if (el) {
+            el.style.fontSize = self.get('fontSize') * self.width / self.originWidth + 'px';
+            el.style.background = 'white';
+            el.innerText = Math.round(self.initValue / 60);
+        }
     };
 
     self.edited = editor => {

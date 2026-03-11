@@ -51,8 +51,13 @@ const svgLineDrawer = (shape, div, x, y) => {
         self.text.style.whiteSpace = "nowrap";
 
         const editor = self.getEditor();
-        editor.editable.style.whiteSpace = null; // 不设置为null会导致中文情况下，移动textConnector，文本变成长条形.
-        const textString = editor.getTextString();
+        // nativeTextEditor 没有独立的 editable 子元素，直接操作 self.text
+        if (editor?.editable) {
+          editor.editable.style.whiteSpace = null;
+        } else if (self.text) {
+          self.text.style.whiteSpace = null;
+        }
+        const textString = editor?.getTextString?.() ?? self.text?.textContent ?? '';
         // 当输入框中没有文字时，让其宽度父级元素（line宽度）保持一致
         if (textString === "") {
             self.text.style.width = "100%";

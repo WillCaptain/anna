@@ -1,0 +1,528 @@
+---
+description: Anna 白板引擎完整开发指南 — 架构、API、扩展约定。每次修改 Anna 代码前必读。
+alwaysApply: true
+---
+
+# Anna 白板引擎开发指南
+
+## 项目概览
+
+Anna 是一个基于浏览器的白板绘图引擎，采用 **单页 HTML + ES Module** 架构，无构建工具，通过 Vite 别名（`@anna/core`, `@anna/common`, `@anna/plugins`）引用内部模块。
+
+```
+anna/
+├── src/
+│   ├── main.js          # 入口：路由调度（首页 ↔ 白板）
+│   ├── whiteboard.js    # 白板工作区：初始化引擎、绑定工具栏
+│   ├── style.css        # 全量 CSS，CSS 变量暗色主题
+│   └── i18n.js          # 中/英双语，LOCALE_ZH / LOCALE_EN 对象
+├── core/                # 引擎核心（通常只读，除非深度修 bug）
+│   ├── base/            # 核心模型：graph, page, shape, container, atom
+│   ├── drawers/         # 渲染实现：canvas/html drawer 体系
+│   ├── shapes/          # 内置形状：rectangle, ellipse, line …
+│   ├── interaction/     # 连接线 connector、命中区 hitRegion
+│   ├── contextToolbar/  # 右键菜单（popupMenu.js / menu.js）
+│   ├── history/         # 撤销/重做命令
+│   └── configuration/   # 属性面板配置项（cornerRadius, backColor…）
+├── plugins/
+│   └── basic/           # 插件形状（可自由扩展）
+├── index.html           # 完整 SPA，包含白板视图 HTML 骨架
+└── SPEC/                # 引擎规范文档（参考）
+```
+
+---
+
+## 核心对象层级
+
+```
+Graph (graph.js)
+ └── Page  (page.js)          ← addPage() 创建
+      └── ShapeManager (shapeManager.js)
+           ├── shapes[]       ← 可序列化用户形状（参与计数）
+           └── unSerializableShapes[]  ← 内部辅助形状（菜单、选框等）
+Shape (shape.js) ← 所有图形基类（基于 Atom 响应式系统）
+```
+
+---
+
+## 引擎初始化（完整流程）
+
+```javascript
+import {graph} from '@anna/core/base/graph.js';
+
+const g = graph(canvasDiv, 'My Board');   // 创建图形引擎
+g.login({name: 'User', id: 'user-id'});  // 必须 login
+g.collaboration.mute = true;             // 单机模式关闭协同
+g.enableText = false;                    // 关闭文字编辑
+
+// 注册所有形状模块（顺序无关）
+for (const mod of SHAPE_MODULES) {
+    await g.dynamicImportStatement(() => Promise.resolve(mod));
+}
+
+if (g.loadConfig) g.loadConfig();        // 加载配置（可选）
+
+const page = g.addPage('Page 1', undefined, canvasDiv);  // 创建页面
+```
+
+---
+
+## Page API（常用）
+
+```javascript
+// 选中状态
+page.getFocusedShapes()            // → Shape[]  当前已选形状
+
+// 绘制工具
+page.want(type, defaultProps)      // 激活指定类型绘制工具
+page.wantedShape.clear()           // 取消绘制工具
+page.wantedShape.isEmpty()         // → boolean 是否没有待绘制形状
+
+// 视图
+page.zoom(delta)                   // 缩放（delta 为增量，如 0.1）
+page.fillScreen(true)              // 适应画布
+page.scaleX                        // 当前缩放比
+
+// 交互
+page.setCursor()                   // 重置鼠标指针
+page.invalidateInteraction()       // 刷新交互层
+
+// 访问器
+page.sm                            // → ShapeManager
+page.interactDrawer.getInteract()  // → 交互层 DOM 元素
+```
+
+---
+
+## ShapeManager API
+
+```javascript
+page.sm.getShapeCount()            // ✅ 用户形状数量（仅可序列化）
+page.sm.shapes                     // ✅ 可序列化形状数组
+
+// ❌ 不要用这个来计数！会包含内部辅助形状：
+// page.sm.getShapes().length
+
+page.sm.getShapes()                // 全部形状（含内部）
+page.sm.getShapes(s => s.isType('menu'))  // 条件筛选
+page.sm.getShapeById(id)           // 按 id 查找
+```
+
+---
+
+## Graph API
+
+```javascript
+g.change(fn)                       // 批量修改属性（触发渲染）
+g.getHistory()                     // → { canUndo(), canRedo(), undo(), redo() }
+g.addEventListener(EVENT_TYPE.X, handler)
+g.uuid()                           // 生成全局唯一 id
+```
+
+---
+
+## 事件系统
+
+```javascript
+import {EVENT_TYPE} from '@anna/common/const.js';
+
+// 选中变化（shapes 为 Shape[]）
+g.addEventListener(EVENT_TYPE.FOCUSED_SHAPES_CHANGE, shapes => { ... });
+
+// 形状被添加（新形状落板后触发）
+g.addEventListener(EVENT_TYPE.SHAPE_ADDED, () => { ... });
+```
+
+---
+
+## 形状属性（通用）
+
+| 属性 | 类型 | 说明 |
+|---|---|---|
+| `shape.type` | string | 唯一类型标识，如 `"rectangle"` |
+| `shape.x` / `shape.y` | number | 绝对坐标（相对画布左上角） |
+| `shape.width` / `shape.height` | number | 尺寸 |
+| `shape.backColor` | string | 填充色（hex，如 `"#ffffff"`） |
+| `shape.borderColor` | string | 边框色 |
+| `shape.borderWidth` | number | 边框宽度（默认 1.5） |
+| `shape.cornerRadius` | number | 圆角（默认 5，仅矩形类有效） |
+| `shape.globalAlpha` | number | 透明度 0–1 |
+| `shape.text` | string | 文字内容 |
+| `shape.serializable` | boolean | true = 用户形状，false = 内部形状 |
+| `shape.getBackColor()` | fn | 返回实际填充色（考虑继承/主题） |
+| `shape.getBorderColor()` | fn | 返回实际边框色 |
+
+### 修改形状属性
+
+```javascript
+annGraph.change(() => {
+    shape.backColor   = '#ff0000';
+    shape.borderColor = '#333333';
+    shape.borderWidth = 2;
+    shape.globalAlpha = 0.8;
+    shape.invalidate && shape.invalidate();
+});
+```
+
+### 删除形状
+
+```javascript
+const focused = page.getFocusedShapes();
+focused.forEach(s => s.remove && s.remove(true));
+```
+
+---
+
+## 新增插件形状：完整步骤
+
+### 步骤 1：创建 `plugins/basic/myShape.js`
+
+**方案 A — 多边形（用顶点坐标描述轮廓）**
+
+```javascript
+import {rectangle} from "@anna/core/shapes/rectangle.js";
+import {canvasGeometryDrawer} from "@anna/core/drawers/canvasGeometryDrawer.js";
+
+const canvasMyShapeDrawer = (shape, div, x, y) => {
+    const self = canvasGeometryDrawer(shape, div, x, y);
+    self.drawBorder = () => {};       // 必须抑制，否则重复渲染
+    self.backgroundRefresh = () => {};// 必须抑制
+
+    self.getPoints = (px, py) => {
+        const w = shape.width, h = shape.height;
+        // 顶点按屏幕坐标顺时针排列（y 轴向下）
+        return [
+            [px,     py],
+            [px + w, py],
+            [px + w, py + h],
+            [px,     py + h],
+        ];
+    };
+
+    self.requireMoveToStart = () => true;  // 第一个点用 moveTo
+    return self;
+};
+
+const myShape = (id, x, y, width, height, parent) => {
+    let self = rectangle(id, x, y, width, height, parent, canvasMyShapeDrawer);
+    self.width  = 100;
+    self.height = 80;
+    self.type   = "myShape";   // ⚠️ 必须全局唯一
+    self.text   = "";
+
+    const getConfigurations = self.getConfigurations;
+    self.getConfigurations = () => {
+        const configurations = getConfigurations.apply(self);
+        configurations.remove(c => c.field === "cornerRadius"); // 不支持圆角时移除
+        return configurations;
+    };
+    return self;
+};
+
+export {myShape};
+```
+
+**方案 B — 图标形状（自定义 canvas 绘制）**
+
+```javascript
+const canvasMyIconDrawer = (shape, div, x, y) => {
+    const self = canvasGeometryDrawer(shape, div, x, y);
+    self.drawBorder = () => {};
+    self.backgroundRefresh = () => {};
+
+    self.drawStatic = (context, px, py) => {
+        // 坐标约定：px = shape.margin ≈ 1，py = shape.margin ≈ 1
+        // 有效绘制区：(px, py) 起点，(shape.width - 2) × (shape.height - 2) 大小
+        const W      = shape.width  - 2;
+        const H      = shape.height - 2;
+        const bw     = shape.borderWidth || 1.5;
+        const fill   = shape.getBackColor();
+        const stroke = shape.getBorderColor();
+
+        context.save();
+        context.lineWidth   = bw;
+        context.strokeStyle = stroke;
+        context.fillStyle   = fill;
+
+        // ... 用 canvas API 绘制 ...
+        context.beginPath();
+        context.roundRect(px, py, W, H, 8);
+        context.fill();
+        context.stroke();
+
+        context.restore();
+    };
+
+    self.getPoints = () => [];  // 自定义 drawStatic 时置空
+    return self;
+};
+```
+
+### 步骤 2：在 `src/whiteboard.js` 注册
+
+```javascript
+// 1. 顶部 import
+import * as myShapeMod from '@anna/plugins/basic/myShape.js';
+
+// 2. 加入 SHAPE_MODULES 数组
+const SHAPE_MODULES = [ ..., myShapeMod ];
+
+// 3. 加入 TOOL_TYPE_MAP
+const TOOL_TYPE_MAP = {
+    ...,
+    myShape: 'myShape',          // key=工具名, value=shape.type 字符串
+};
+
+// 4. 在 getDefaultProperties() 中设置默认尺寸（可选）
+if (type === 'myShape') return { ...base, width: 100, height: 80 };
+```
+
+### 步骤 3：在 `index.html` 添加按钮
+
+```html
+<!-- 在对应的 .shape-group-body > .shape-grid 内 -->
+<button class="shape-item" data-tool="myShape" title="提示文字">
+  <svg viewBox="0 0 24 24"><!-- 预览图标 --></svg>
+  <span data-i18n="s.myShape">标签</span>
+</button>
+```
+
+### 步骤 4：在 `src/i18n.js` 添加翻译
+
+```javascript
+// LOCALE_ZH 和 LOCALE_EN 都要加：
+'s.myShape':     '我的形状',
+'tool.myShape':  '我的形状',
+```
+
+---
+
+## Drawer 体系
+
+| Drawer | 适用场景 |
+|---|---|
+| `rectangleDrawer` | HTML 渲染矩形（带文字，支持 HTML 特性） |
+| `canvasRectangleDrawer` | Canvas 渲染矩形基础实现 |
+| `canvasGeometryDrawer` | 多边形/图标形状的标准基类 ✅ 插件首选 |
+| `canvasContainerDrawer` | 容器形状 |
+
+### drawStatic 坐标系详解
+
+```
+canvasDrawer.draw() 调用：
+  self.drawStatic(context, x + shape.margin, y + shape.margin)
+  其中 x=0, y=0（drawer 默认值），shape.margin ≈ 1
+
+因此 drawStatic(context, px, py) 中：
+  px ≈ 1
+  py ≈ 1
+  有效宽度 = shape.width - 2   （与 canvasRectangleDrawer 一致）
+  有效高度 = shape.height - 2
+```
+
+### getPoints 多边形偏移计算
+
+```
+calcPoint(points, borderWidth/2)  ← 向内缩进 bw/2
+然后所有坐标 -= (bw/2 + 1)        ← 额外整体偏移
+
+所以多边形实际渲染略超出形状边界，canvas 元素会自动扩大以容纳
+```
+
+---
+
+## 主题系统（whiteboard.js）
+
+```javascript
+// 三套画布主题，currentThemeIndex 控制当前激活
+const CANVAS_THEMES = [
+    { id: 'light', canvasBg: '#c8c5c0', shapeBackColor: '#ffffff', shapeBorderColor: '#a8b2c4' },
+    { id: 'dark',  canvasBg: '#2a2d3a', shapeBackColor: '#3a3d4a', shapeBorderColor: '#5a5f78' },
+    { id: 'warm',  canvasBg: '#f0ece6', shapeBackColor: '#ffffff', shapeBorderColor: '#b8a898' },
+];
+
+// THEME 通过 getter 动态读取当前主题
+const THEME = {
+    get canvasBg()         { return CANVAS_THEMES[currentThemeIndex].canvasBg; },
+    get shapeBackColor()   { return CANVAS_THEMES[currentThemeIndex].shapeBackColor; },
+    get shapeBorderColor() { return CANVAS_THEMES[currentThemeIndex].shapeBorderColor; },
+    shapeBorderWidth: 1.5,
+    penColor: '#7a8499',
+    penWidth: 2,
+};
+
+// 切换主题：currentThemeIndex++ % 3，然后调用 applyCanvasTheme()
+// applyCanvasTheme() 直接设置 canvasDiv.style.background
+```
+
+---
+
+## CSS 变量（暗色主题）
+
+```css
+--bg:          #0a0b10    /* body 背景 */
+--bg-home:     #0d0f18    /* 首页背景 */
+--surface:     #13151f    /* 工具栏/面板背景 */
+--surface2:    #1c1f2e    /* 次级面板 */
+--surface3:    #242840    /* 三级面板 */
+--border:      #272b3e    /* 主边框 */
+--border2:     #343850    /* 次边框 */
+--text:        #d0d8f0    /* 主文字 */
+--text-dim:    #6b7a9e    /* 暗淡文字 */
+--text-muted:  #3d4460    /* 极暗文字 */
+--accent:      #7c6ff7    /* 紫色强调色 */
+--accent-h:    #9a90ff    /* 强调色 hover */
+--accent-glow: rgba(124,111,247,0.18)
+--danger:      #ff4f6a    /* 危险/删除 */
+--active:      rgba(124,111,247,0.14)  /* 激活背景 */
+--radius:      8px
+--radius-lg:   14px
+--toolbar-h:   50px
+--status-h:    26px
+```
+
+---
+
+## i18n 键名约定
+
+| 前缀 | 用途 | 示例 |
+|---|---|---|
+| `s.` | 形状面板按钮标签 | `s.rectangle` |
+| `grp.` | 形状分组标题 | `grp.basic` |
+| `tab.` | 左侧面板页签 | `tab.shapes` |
+| `tool.` | 状态栏工具名 | `tool.select` |
+| `nav.` | 首页导航链接 | `nav.docs` |
+| `hero.` | 首页 hero 区文案 | `hero.title` |
+| `status.` | 状态栏文本 | `status.shapes` |
+
+两个对象 `LOCALE_ZH` 和 `LOCALE_EN` 必须同步更新。
+
+---
+
+## HTML 面板结构约定
+
+```html
+<!-- 左侧面板标签（data-cat 值需与 .shape-category 匹配） -->
+<button class="shape-tab active" data-cat="shapes">
+  <svg>...</svg>
+  <span data-i18n="tab.shapes">形状</span>
+</button>
+
+<!-- 对应内容区 -->
+<div class="shape-category active" data-cat="shapes">
+  <div class="shape-group">
+    <button class="shape-group-header">
+      <span data-i18n="grp.xxx">分组名</span>
+      <svg class="shape-group-chevron">...</svg>  <!-- 折叠箭头 -->
+    </button>
+    <div class="shape-group-body">              <!-- collapsed 时 max-height:0 -->
+      <div class="shape-grid">                 <!-- 2列网格 -->
+        <button class="shape-item" data-tool="toolName" title="tooltip">
+          <svg viewBox="0 0 24 24">...</svg>
+          <span data-i18n="s.shapeName">标签</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+---
+
+## 默认属性约定（getDefaultProperties）
+
+```javascript
+// base 包含所有形状的通用默认值
+const base = {
+    width:        120,
+    height:       80,
+    backColor:    THEME.shapeBackColor,
+    borderColor:  THEME.shapeBorderColor,
+    borderWidth:  THEME.shapeBorderWidth,  // 1.5
+    cornerRadius: 5,                       // 全局默认圆角
+    globalAlpha:  1,
+};
+
+// line / freeLine 不用 base，单独处理
+if (type === 'line')     return {};
+if (type === 'freeLine') return { borderColor: THEME.penColor, borderWidth: THEME.penWidth };
+```
+
+---
+
+## 常见 Bug 记录
+
+### 1. 状态栏形状计数多一个
+**原因**：`page.sm.getShapes()` 包含内部辅助形状（选中时引擎可能创建辅助对象）  
+**修复**：改用 `page.sm.getShapeCount()`（仅计算可序列化形状）
+
+### 2. 多边形 getPoints 需要正确的绕向
+**约定**：屏幕坐标顺时针（y 轴向下），与 `calcPoint` 内部向量叉积一致  
+`cross.js` 是标准参考实现
+
+### 3. 插件形状 `drawBorder / backgroundRefresh` 未置空
+**症状**：形状边框重复渲染、出现异常边框  
+**修复**：在 drawer 内加 `self.drawBorder = () => {}; self.backgroundRefresh = () => {};`
+
+### 4. `context.roundRect` 兼容性
+Chrome 99+，Firefox 112+ 支持。目前项目面向现代浏览器，可直接使用。
+
+---
+
+## 现有插件形状一览
+
+| 文件 | type 字符串 | 说明 |
+|---|---|---|
+| `hexagon.js` | `hexagon` | 六边形（多边形） |
+| `octagon.js` | `octagon` | 八边形（多边形） |
+| `cross.js` | `cross` | 十字形（多边形，12点） |
+| `trapezoid.js` | `trapezoid` | 梯形（多边形） |
+| `chevron.js` | `chevron` | 旗形/箭形（多边形） |
+| `checkmark.js` | `checkmark` | 勾号（多边形，6点） |
+| `xmark.js` | `xmark` | 叉号（多边形，12点） |
+| `database.js` | `database` | 数据库圆柱体（自定义 drawStatic） |
+| `phone.js` | `phone` | 手机（自定义 drawStatic） |
+| `monitor.js` | `monitor` | 显示器（自定义 drawStatic） |
+| `tablet.js` | `tablet` | 平板（自定义 drawStatic） |
+| `document.js` | `document` | 文档折角（自定义 drawStatic） |
+| `tree.js` | `tree` | 树（自定义 drawStatic） |
+
+---
+
+## 路由系统（main.js）
+
+```javascript
+// Hash 路由：#/home, #/whiteboard
+// 白板初始化只执行一次（whiteboardReady flag）
+// 通过 navigate('whiteboard') 切换视图
+```
+
+---
+
+## 工具栏 DOM 结构
+
+```
+#toolbar
+  .toolbar-brand (#btn-home)     ← Anna logo + 返回首页
+  .toolbar-divider
+  .tool-group (#tool-group)      ← 选择工具按钮（data-tool="select"）
+  .toolbar-divider
+  .action-group                  ← 撤销/重做/删除按钮
+  .toolbar-spacer                ← flex 弹性空白
+  .zoom-group                    ← 缩放控件 + zoom-label
+  .toolbar-divider
+  #btn-theme                     ← 主题切换按钮
+```
+
+---
+
+## 状态栏 DOM 结构
+
+```
+#statusbar
+  #status-tool     ← "工具: 选择"
+  .dot
+  #status-shapes   ← "N 个形状"（用 getShapeCount()）
+  .dot
+  #status-selected ← "已选中 N 个" / "未选中"
+```

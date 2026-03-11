@@ -993,7 +993,7 @@ const shapeComment = (context => {
       if (triggerSource !== 'keyEnter') {
         return;
       }
-      const textString = self.drawer.getEditor().getTextString();
+      const textString = self.drawer.getEditor()?.getTextString() ?? '';
       if (typeof textString === 'string' && textString.trim() === '') {
         return;
       }
@@ -1037,9 +1037,7 @@ const shapeCommentDrawer = (shape, div, x, y) => {
    * 重写initialize方法.
    */
   drawer.initialize = () => {
-    const editor = drawer.getEditor();
-    editor.addForbiddenCommand('insertOrderedList');
-    editor.addForbiddenCommand('insertUnorderedList');
+    // nativeTextEditor 不需要禁用命令（contenteditable 默认无列表快捷键）
   };
 
   /**
@@ -1057,7 +1055,7 @@ const shapeCommentDrawer = (shape, div, x, y) => {
       span.innerText = shape.text;
       drawer.text.append(span);
     } else {
-      renderText.apply(drawer, [shape.isFocused]);
+      renderText.call(drawer);
     }
   };
   return drawer;

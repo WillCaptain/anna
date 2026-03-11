@@ -15,6 +15,7 @@ import {
   PROGRESS_STATUS,
 } from '../../common/const.js';
 import {uuid} from '../../common/util.js';
+import {nativeTextEditor} from '../text/nativeTextEditor.js';
 
 import {page} from './page.js';
 import {collaboration} from '../collaboration/collaboration.js';
@@ -1201,13 +1202,29 @@ const graph = (div, title) => {
   };
 
   /**
-   * 创建编辑器.
+   * 创建原生文字编辑器（基于 contenteditable）。
+   * 子类可以覆盖此方法以接入外部富文本引擎。
    *
-   * @param shape 图形对象.
-   * @return #editorInterface 编辑器对象.
-   * @abstract 抽象方法.
+   * @param {object} shape 图形对象
+   * @returns {object} 编辑器接口
    */
   self.createEditor = (shape) => {
+    const editor = nativeTextEditor(shape);
+    // 将 input 事件触发的文字变更同步回 shape.text
+    const listenerId = `${shape.page?.id ?? ''}_${shape.id}`;
+    editor.editor.addDataListener(listenerId, (prevData, data, isSetManually) => {
+      if (isSetManually) return;
+      shape.page?.ignoreReact(() => {
+        if (shape.text !== data) {
+          shape.text = data;
+        }
+        shape.textChanged?.();
+        if (shape.isEnableHtmlText?.()) {
+          shape.textInnerHtml = data;
+        }
+      });
+    });
+    return editor;
   };
 
   /**
