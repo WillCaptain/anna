@@ -66,9 +66,7 @@ const reference = (id, x, y, width, height, parent, drawer = containerDrawer) =>
             self.referenceData[shape.id].y = shape.y;
         };
         shape.clearPoly = () => {
-            if (self.referenceData[shape.id] !== undefined) {
-                self.referenceData[shape.id] = undefined;
-            }
+            delete self.referenceData[shape.id];
         };
     };
 
@@ -79,9 +77,6 @@ const reference = (id, x, y, width, height, parent, drawer = containerDrawer) =>
      * @param shape
      */
     let restorePolyData = shape => {
-        if (shape.readOnly) {
-            return;
-        }
         let properties = self.referenceData[shape.id];
         if (properties === undefined) {
             return;
@@ -127,6 +122,15 @@ const reference = (id, x, y, width, height, parent, drawer = containerDrawer) =>
 
         vector.getShapes().forEach(s => s.remove());
         const shapes = self.filterRefered(data.shapes);
+
+        // 同页引用时，必须重新生成所有 id，避免与源 shape 发生 id 冲突
+        // 跨页引用时沿用原 id（uniqRef=true 场景，后端数据库不会重复）
+        const isSamePage = !!self.referencePage && self.referencePage === self.page.id;
+        const idMap = new Map();
+        if (isSamePage) {
+            shapes.forEach(s => idMap.set(s.id, self.graph.uuid()));
+        }
+
         let minX;
         let minY;
         shapes.forEach(s => {
@@ -136,11 +140,18 @@ const reference = (id, x, y, width, height, parent, drawer = containerDrawer) =>
 
             const clonedS = deepClone(s);
 
-            /*
-             * 由于后端存储数据库中默认shapeId是唯一的，如果不重新生成id，会导致模板page中和普通page中的图形id重复，导致在保存到后端
-             * 存储服务器时，图形的数据被覆盖.所以这里暂时新生成一个uuid.
-             */
-            clonedS.id = s.isPlaceHolder ? self.graph.uuid() : s.id;
+            if (isSamePage) {
+                // 同页：全部生成新 id，并将 container 指向新 id
+                clonedS.id = idMap.get(s.id) ?? self.graph.uuid();
+                if (idMap.has(clonedS.container)) {
+                    clonedS.container = idMap.get(clonedS.container);
+                }
+            } else {
+                /*
+                 * 跨页：若图形不是占位符则沿用原 id，避免后端存储 id 重复
+                 */
+                clonedS.id = s.isPlaceHolder ? self.graph.uuid() : s.id;
+            }
             let s1 = self.page.createShape(clonedS.type, clonedS.x, clonedS.y, clonedS.id);
             const index = s1.index;
 
@@ -282,7 +293,7 @@ const reference = (id, x, y, width, height, parent, drawer = containerDrawer) =>
     self.invalidateAlone = () => {
         let vector = self.getVector();
         if (vector !== undefined) {
-            vector.moveTo(self.x + 1, self.y + 1);
+            vector.moveTo(self.x, self.y);
         }
         invalidateAlone.call(self);
         self.fit();
@@ -324,6 +335,10 @@ const reference = (id, x, y, width, height, parent, drawer = containerDrawer) =>
 
     // --------------------------serialization & detection------------------------------
     self.addDetection(["referenceShape"], (property, value, preValue) => {
+        self.refer();
+        self.invalidate();
+    });
+    self.addDetection(["referencePage"], (property, value, preValue) => {
         self.refer();
         self.invalidate();
     });

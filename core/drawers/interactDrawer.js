@@ -4,7 +4,8 @@
 
 import {pixelRateAdapter} from '../../common/util.js';
 import {cursorDrawer} from './cursorDrawer.js';
-import {PAGE_OPERATION_MODE} from '../../common/const.js';
+import {PAGE_OPERATION_MODE, EVENT_TYPE} from '../../common/const.js';
+import {groupBox as createGroupBox} from '../interaction/groupBox.js';
 
 const CURSOR_DEFAULT_SIZE = 30;
 /**
@@ -734,7 +735,21 @@ const interactDrawer = (graph, page, div) => {
       self.scrollbar.update();
     }
     self.drawDynamic(x, y);
+    self.groupBox.draw();
   };
+
+  // ─── group box ────────────────────────────────────────────────────────────
+  self.groupBox = createGroupBox(page);
+  self.sensor.appendChild(self.groupBox.canvas);
+
+  // page.addEventListener 在 page 工厂函数末尾才定义，延迟一个 tick 等待 page 完全初始化
+  Promise.resolve().then(() => {
+    if (page.addEventListener) {
+      page.addEventListener(EVENT_TYPE.FOCUSED_SHAPES_CHANGE, (shapes) => {
+        self.groupBox.update(Array.isArray(shapes) ? shapes : []);
+      });
+    }
+  });
 
   self.getInteract = () => self.sensor;
   self.reset();

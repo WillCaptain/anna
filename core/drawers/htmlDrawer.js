@@ -334,7 +334,13 @@ const drawer = (shape, div, x = 0, y = 0) => {
   };
 
   self.animationResize = (width, height) => {
-    if ((shape.enableAnimation || shape.isFocused || shape.linking)) {// && !shape.inDragging) {
+    // 多选时（>= 2 个形状同时选中），跳过逐个绘制选中轮廓，
+    // 由 groupBox 统一绘制包围框，避免大量 animationCanvas DOM 元素导致卡顿。
+    const BULK_SELECT_THRESHOLD = 1;
+    const focusedCount = shape.page?.getFocusedShapes?.()?.length ?? 0;
+    const isBulkFocused = shape.isFocused && focusedCount > BULK_SELECT_THRESHOLD;
+
+    if ((shape.enableAnimation || (shape.isFocused && !isBulkFocused) || shape.linking)) {// && !shape.inDragging) {
       if (self.animationCanvas === undefined) {
         self.animationCanvas = self.createElement('canvas', `animation:${shape.id}`);
         self.animationCanvas.style.position = 'absolute';

@@ -87,8 +87,9 @@ const wantedShape = (type, properties) => {
  * @param aDrawer   动画层绘制器工厂（默认 animationDrawer）
  */
 const page = (div, graph, name, id, iDrawer = interactDrawer, pDrawer = pageDrawer, aDrawer = animationDrawer) => {
-  const PAGE_SCALE_MIN = 0.1;
-  const PAGE_SCALE_MAX = 4.0;
+  const PAGE_SCALE_MIN = 0.1;    // 10%
+  const PAGE_SCALE_MAX = 4.0;    // 400%
+  const ANIMATION_MAX_SHAPES = 1000; // 超过此数量时停止所有动画
   const RESOURCE_PATH = '../../resources/';
   const PAGE_MIN_WIDTH = div.clientWidth;
   const PAGE_MAX_WIDTH = 1024;
@@ -1086,7 +1087,20 @@ const page = (div, graph, name, id, iDrawer = interactDrawer, pDrawer = pageDraw
    */
   self.selectAll = () => {
     const shapes = self.sm.getShapes(s => s.container === self.id && s.getSelectable());
-    shapes.forEach(s => s.select());
+    if (shapes.length === 0) return;
+
+    if (shapes.length > 50) {
+      // 批量选中：抑制逐个重绘，避免 1300 次同步 canvas 操作
+      self.disableInvalidate = true;
+      shapes.forEach(s => s.select());
+      self.disableInvalidate = false;
+      // 仅重绘当前未被性能裁剪隐藏的形状（LOD 和视口外的形状跳过）
+      shapes.forEach(s => { if (!s._hiddenByPerf) s.invalidateAlone?.(); });
+      // 确保 FOCUSED_SHAPES_CHANGE 至少触发一次（用于更新属性栏、状态栏）
+      self.triggerEvent({type: EVENT_TYPE.FOCUSED_SHAPES_CHANGE, value: self.getFocusedShapes()});
+    } else {
+      shapes.forEach(s => s.select());
+    }
   };
 
   // ------------------invalidations------------------------
@@ -1351,8 +1365,12 @@ const page = (div, graph, name, id, iDrawer = interactDrawer, pDrawer = pageDraw
   };
 
   self.animate = () => {
+    if (self.sm.getShapeCount() > ANIMATION_MAX_SHAPES) return;
     self.sm.getShapes().forEach(s => s.animate && s.animate());
   };
+
+  /** 暴露动画上限供外部（animationDrawer 等）读取 */
+  self.animationMaxShapes = ANIMATION_MAX_SHAPES;
   self.actions = [];
 
   /**
@@ -2164,6 +2182,17 @@ const setMouseActions = (pageVal) => {
       return;
     }
     pageVal.mousedownShape = pageVal.switchMouseInShape(position.x, position.y, s => s.getSelectable());
+
+    // 检测是否点中多选组合包围框的手柄
+    const _gb = pageVal.interactDrawer?.groupBox;
+    if (_gb?.isActive()) {
+      const _handle = _gb.findHandle(position.x, position.y);
+      if (_handle) {
+        _gb.activeHandle = _handle;
+        pageVal.mousedownShape = _gb;
+      }
+    }
+
     if ((!pageVal.mouseSensitive && pageVal.readOnly()) || position.e.button > 0) {
       return;
     }
@@ -2322,6 +2351,14 @@ const setMouseActions = (pageVal) => {
     if (pageVal.wantedShape.isEmpty()) {
       pageVal.mouseInShape.rotatePosition(position);
       pageVal.mouseInShape.onMouseMove(position);
+      // Check if cursor is over a groupBox handle and set the appropriate resize/rotate cursor.
+      const _gb = pageVal.interactDrawer?.groupBox;
+      if (_gb?.isActive()) {
+        const _handle = _gb.findHandle(position.x, position.y);
+        if (_handle) {
+          pageVal.cursor = _gb.getHandleCursor(_handle);
+        }
+      }
     } else {
       pageVal.onMouseMove(position);
     }
@@ -2663,12 +2700,14 @@ const setKeyActions = (pageVal) => {
 
     // select all: ctrl+a
     if (pageVal.ctrlKeyPressed && (e.code === 'KeyA')) {
+      e.preventDefault(); // 防止浏览器"全选页面文字"默认行为
       pageVal.selectAll();
       return false;
     }
     // group: ctrl+g
     if (pageVal.ctrlKeyPressed && (e.code === 'KeyG')) {
       if (focused.length > 1) {
+        e.preventDefault();
         pageVal.group(focused);
         return false;
       }
@@ -2685,6 +2724,7 @@ const setKeyActions = (pageVal) => {
 
     // ctrl+D
     if (pageVal.ctrlKeyPressed && (e.code === 'KeyD' || e.keyCode === 68)) {
+      e.preventDefault(); // 防止 Chrome 书签对话框
       const allowed = focused.filter(s => {
         if (s.duplicate) {
           s.duplicate();
@@ -2705,6 +2745,32 @@ const setKeyActions = (pageVal) => {
       if (lines.length > 0) {
         pageVal.graph.change(() => {
           lines.forEach(s => { s.allowShine = !s.allowShine; });
+        });
+        return false;
+      }
+    }
+
+    // Ctrl+Shift+V: 粘贴为引用（读取上次 Ctrl+C 复制的原始 shape ID）
+    if (pageVal.ctrlKeyPressed && e.shiftKey && e.code === 'KeyV') {
+      const sourceIds    = pageVal._copiedSourceIds;
+      const sourcePageId = pageVal._copiedSourcePageId;
+      if (sourceIds && sourceIds.length > 0 && sourcePageId) {
+        e.preventDefault();
+        // 确保来源页序列化数据是最新的
+        if (sourcePageId === pageVal.id) {
+          pageVal.serialize();
+        }
+        sourceIds.forEach((srcId, i) => {
+          const ref = pageVal.createNew('reference',
+            pageVal.mousex + (i + 1) * 24,
+            pageVal.mousey + (i + 1) * 24);
+          if (!ref || typeof ref.refer !== 'function') return;
+          pageVal.disableReact = true;
+          ref.referenceShape = srcId;
+          ref.referencePage  = sourcePageId;
+          pageVal.disableReact = false;
+          ref.refer();
+          ref.invalidate();
         });
         return false;
       }

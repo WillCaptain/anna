@@ -95,8 +95,14 @@ const canvasDrawer = (shape, div, x = 0, y = 0) => {
             if (!shape.getVisibility()) {
                 return;
             }
+
+            // LOD >= 2 的形状由 pageDrawer 的 LOD 覆盖层统一绘制，
+            // invalidateAlone() 已在进入此路径前将其 hide()，理论上不会走到这里。
+            // LOD 4（< 1px）安全兜底：直接跳过。
+            if ((shape.getLODLevel?.() ?? 0) >= 4) return;
+
+            // 正常绘制
             self.drawBorder();
-            // 重新绘制
             let offsetX = shape.width < 0 ? -shape.width : 0;
             let offsetY = shape.height < 0 ? -shape.height : 0;
 

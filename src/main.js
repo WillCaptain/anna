@@ -13,6 +13,88 @@ import '@anna/common/extensions/stringExtension.js';
 import {initWhiteboard} from './whiteboard.js';
 import {t, isZh} from './i18n.js';
 
+// ─── 用户系统（与 12th.ai 主站共享同一 localStorage key） ────────────────────
+const AUTH_KEY = 'playground_auth';
+function getAuth()   { try { return JSON.parse(localStorage.getItem(AUTH_KEY) || 'null'); } catch { return null; } }
+function setAuth(v)  { localStorage.setItem(AUTH_KEY, JSON.stringify(v)); }
+function clearAuth() { localStorage.removeItem(AUTH_KEY); }
+
+function syncAuthUI() {
+    const auth    = getAuth();
+    const chip    = document.getElementById('anna-user-chip');
+    const chipName = document.getElementById('anna-chip-name');
+    const loginBtn = document.getElementById('anna-btn-login');
+    if (auth && auth.username) {
+        chipName.textContent = auth.username;
+        chip.classList.remove('hidden');
+        loginBtn.classList.add('hidden');
+    } else {
+        chip.classList.add('hidden');
+        loginBtn.classList.remove('hidden');
+    }
+}
+
+async function authAction(action) {
+    const u = document.getElementById('anna-auth-username').value.trim();
+    const p = document.getElementById('anna-auth-password').value.trim();
+    const errEl = document.getElementById('anna-auth-error');
+    if (!u || !p) { errEl.textContent = t('auth.err1'); return; }
+    errEl.textContent = '';
+    try {
+        const r = await fetch(`/api/auth/${action}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({username: u, password: p}),
+        });
+        const d = await r.json();
+        if (!r.ok) { errEl.textContent = d.error || t('auth.err2'); return; }
+        setAuth({username: d.username, token: d.token});
+        document.getElementById('anna-auth-modal').classList.add('hidden');
+        syncAuthUI();
+    } catch { errEl.textContent = t('auth.err3'); }
+}
+
+function initAuth() {
+    const modal    = document.getElementById('anna-auth-modal');
+    const loginBtn = document.getElementById('anna-btn-login');
+    const closeBtn = document.getElementById('anna-auth-close');
+    const cancelBtn = document.getElementById('anna-auth-cancel');
+    const logoutBtn = document.getElementById('anna-btn-logout');
+    const registerBtn = document.getElementById('anna-auth-register');
+    const loginConfirmBtn = document.getElementById('anna-auth-login');
+
+    loginBtn.addEventListener('click', () => {
+        document.getElementById('anna-auth-username').value = '';
+        document.getElementById('anna-auth-password').value = '';
+        document.getElementById('anna-auth-error').textContent = '';
+        modal.classList.remove('hidden');
+        document.getElementById('anna-auth-username').focus();
+    });
+    closeBtn.addEventListener('click',  () => modal.classList.add('hidden'));
+    cancelBtn.addEventListener('click', () => modal.classList.add('hidden'));
+    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+
+    registerBtn.addEventListener('click',     () => authAction('register'));
+    loginConfirmBtn.addEventListener('click', () => authAction('login'));
+    document.getElementById('anna-auth-password').addEventListener('keydown', e => {
+        if (e.key === 'Enter') authAction('login');
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+        const auth = getAuth();
+        if (auth?.token) {
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: {Authorization: `Bearer ${auth.token}`},
+            }).catch(() => {});
+        }
+        clearAuth();
+        syncAuthUI();
+    });
+
+    syncAuthUI();
+}
+
 // ─── 国际化：非中文环境替换所有 data-i18n 文本 ───────────────────────────────
 function applyI18n() {
     document.documentElement.lang = isZh ? 'zh-CN' : 'en';
@@ -79,3 +161,4 @@ window.addEventListener('popstate', () => {
 
 // ─── 初始路由 ─────────────────────────────────────────────────────────────────
 renderRoute(getRoute());
+initAuth();

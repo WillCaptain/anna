@@ -242,7 +242,20 @@ const drawFocusFrame = (shape, context) => {
         if (shape.drawer.customizedDrawFocus) {
             shape.drawer.customizedDrawFocus(context, x1, y1, frame.width + 2 * pad + 2 * focusMargin, frame.height + 2 * pad + 2 * focusMargin);
         } else {
-            context.dashedRect(x1, y1, frame.width + 2 * focusMargin, frame.height + 2 * focusMargin, 2, 1, shape.page.focusFrameColor);
+            context.dashedRect(x1, y1, frame.width + 2 * focusMargin, frame.height + 2 * focusMargin, 5, 1.5, shape.page.focusFrameColor);
+            // Draw connecting line from top-center to the rotate handle (matches multi-select style)
+            if (shape.getRotateAble && shape.getRotateAble()) {
+                const topMidX = x1 + (frame.width + 2 * focusMargin) / 2;
+                context.save();
+                context.strokeStyle = shape.page.focusFrameColor;
+                context.lineWidth = 1;
+                context.setLineDash([]);
+                context.beginPath();
+                context.moveTo(topMidX, y1);
+                context.lineTo(topMidX, y1 - 7);
+                context.stroke();
+                context.restore();
+            }
         }
     }
 };

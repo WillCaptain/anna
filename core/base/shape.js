@@ -25,6 +25,7 @@ import {
 import {configurationFactory} from '../configuration/configurationFactory.js';
 import {layoutCommand} from '../history/commands.js';
 import {baseDisplayFields} from '../properties/shapeDisplayFields.js';
+import {t} from '../../src/i18n.js';
 import {lockRegion} from '../interaction/hitRegion.js';
 import {imageSaver} from '../shapes/thumb.js';
 import {inPolygon} from '../../common/graphics.js';
@@ -508,8 +509,41 @@ const shape = (id, x, y, width, height, parent, drawer) => {
    * 如果不在可见范围，为提高性能，动画不绘制
    * 辉子 2020
    */
+  /**
+   * LOD 等级常量
+   * 0 = 正常绘制  2 = 简化方块/直线  3 = 单点  4 = 不显示
+   * 屏幕像素 = shape.width * page.scaleX（CSS transform 决定最终缩放）
+   */
+  self.LOD_NORMAL     = 0;
+  self.LOD_SIMPLIFIED = 2; // max(screenW, screenH) < 8px
+  self.LOD_DOT        = 3; // max(screenW, screenH) < 3px
+  self.LOD_INVISIBLE  = 4; // both dims < 1px
+
+  self.getLODLevel = () => {
+    if (!self.page) return self.LOD_NORMAL;
+    const sx = self.page.scaleX, sy = self.page.scaleY;
+    const sw = Math.abs(self.width  * sx);
+    const sh = Math.abs(self.height * sy);
+    // 两个维度都 < 1px 才完全不显示（不影响长而细的线）
+    if (sw < 1 && sh < 1) return self.LOD_INVISIBLE;
+    // 取较大维度作为 LOD 依据：只有整体都很小时才简化
+    const maxDim = Math.max(sw, sh);
+    if (maxDim < 3) return self.LOD_DOT;
+    if (maxDim < 8) return self.LOD_SIMPLIFIED;
+    return self.LOD_NORMAL;
+  };
+
   self.inScreen = () => {
-    return true;
+    if (!self.page) return true;
+    const page = self.page;
+    const sx = page.scaleX, sy = page.scaleY;
+    const sw = Math.abs(self.width  * sx);
+    const sh = Math.abs(self.height * sy);
+    // 仅做尺寸剔除：两个维度都 < 1px → 人眼不可见
+    // ⚠️ 不在此处做视口位置裁剪：视口裁剪放在 invalidateAlone() 里，
+    //    确保 select() / unSelect() 不受位置裁剪影响（否则粘贴到视口外的
+    //    形状无法被选中，导致 FOCUSED_SHAPES_CHANGE 不触发、状态栏计数不更新）
+    return !(sw < 1 && sh < 1);
   };
 
   /**
@@ -581,14 +615,49 @@ const shape = (id, x, y, width, height, parent, drawer) => {
       return;
     }
 
+    // 视口位置裁剪（仅渲染层优化，不影响 select/unSelect）
+    // 只对直属 page 的顶层形状做，嵌套形状依赖父容器的可见性
+    if (self.getContainer?.() === self.page) {
+      const page = self.page;
+      const sx = page.scaleX, sy = page.scaleY;
+      const sw = Math.abs(self.width  * sx);
+      const sh = Math.abs(self.height * sy);
+      const pw = page.div?.clientWidth  ?? 0;
+      const ph = page.div?.clientHeight ?? 0;
+      if (pw > 0 && ph > 0) {
+        const MARGIN = 40;
+        const screenX = (self.x + page.x) * sx;
+        const screenY = (self.y + page.y) * sy;
+        if (screenX + sw + MARGIN < 0 || screenX - MARGIN > pw ||
+            screenY + sh + MARGIN < 0 || screenY - MARGIN > ph) {
+          self.drawer.hide();
+          self._hiddenByPerf = true;
+          return;
+        }
+      }
+    }
+
     if (!self.getVisibility()) {
       self.drawer.hide();
-    } else {
-      self.manageConnectors();
-      self.drawer.move();
-      self.drawer.transform();
-      self.render();
+      self._hiddenByPerf = true;
+      return;
     }
+
+    const lod = self.getLODLevel?.() ?? 0;
+    if (lod >= 2) {
+      // 形状太小（屏幕 < 8px），隐藏自身 canvas，交由 LOD 覆盖层统一绘制
+      self.drawer.hide();
+      self._hiddenByPerf = true;
+      self.page.drawer.scheduleLODRedraw?.();
+      return;
+    }
+
+    // 正常渲染
+    self._hiddenByPerf = false;
+    self.manageConnectors();
+    self.drawer.move();
+    self.drawer.transform();
+    self.render();
   };
 
   /**
@@ -761,7 +830,7 @@ const shape = (id, x, y, width, height, parent, drawer) => {
           type: 'icon',
           name: 'copy',
           icon: copyIcon,
-          text: '复制',
+          text: t('menu.copy'),
           group: 'base',
           onClick: function (target) {
             const event = new KeyboardEvent('keydown', {
@@ -776,7 +845,7 @@ const shape = (id, x, y, width, height, parent, drawer) => {
           type: 'icon',
           name: 'delete',
           icon: deleteIcon,
-          text: '删除',
+          text: t('menu.delete'),
           group: 'base',
           onClick: function (target) {
             const shapes = Array.isArray(target) ? target : [target];
@@ -826,7 +895,7 @@ const shape = (id, x, y, width, height, parent, drawer) => {
     });
 
     const erasers = {
-      text: '擦除', menus: [], width: 30, draw: (context) => {
+      text: t('menu.erase'), menus: [], width: 30, draw: (context) => {
         context.strokeStyle = 'dimgray';
         context.strokeRect(-3, -2, 6, 5);
         context.strokeStyle = 'red';
@@ -834,7 +903,7 @@ const shape = (id, x, y, width, height, parent, drawer) => {
       },
     };
     erasers.menus.push({
-      text: '小', action: shapeArg => {
+      text: t('menu.small'), action: shapeArg => {
         setEraser(shapeArg, 3);
       }, draw: (context) => {
         context.fillStyle = 'red';
@@ -842,7 +911,7 @@ const shape = (id, x, y, width, height, parent, drawer) => {
       },
     });
     erasers.menus.push({
-      text: '大', action: shapeArg => {
+      text: t('menu.large'), action: shapeArg => {
         setEraser(shapeArg, 6);
       }, draw: (context) => {
         context.fillStyle = 'dimgray';
@@ -857,7 +926,7 @@ const shape = (id, x, y, width, height, parent, drawer) => {
 
     // 层级
     const layer = {
-      text: '层级', menus: [], draw: (context) => {
+      text: t('menu.zIndex'), menus: [], draw: (context) => {
         context.fillStyle = 'silver';
         context.fillRect(0, -3, 6, 6);
         context.strokeStyle = 'white';
@@ -871,7 +940,7 @@ const shape = (id, x, y, width, height, parent, drawer) => {
       },
     };
     layer.menus.push({
-      text: '向上一层',
+      text: t('menu.bringUp'),
       action: s => {
         s.page.sm.updateShapes(writer => {
           writer.moveUp([s]);
@@ -891,7 +960,7 @@ const shape = (id, x, y, width, height, parent, drawer) => {
       },
     });
     layer.menus.push({
-      text: '向下一层',
+      text: t('menu.sendDown'),
       action: s => {
         s.page.sm.updateShapes(writer => {
           writer.moveDown([s]);
@@ -911,7 +980,7 @@ const shape = (id, x, y, width, height, parent, drawer) => {
       },
     });
     layer.menus.push({
-      text: '到最顶层', action: s => {
+      text: t('menu.bringTop'), action: s => {
         s.page.sm.updateShapes(writer => {
           writer.moveTop([s]);
         }, true, true);
@@ -929,7 +998,7 @@ const shape = (id, x, y, width, height, parent, drawer) => {
       },
     });
     layer.menus.push({
-      text: '到最底层', action: s => {
+      text: t('menu.sendBottom'), action: s => {
         s.page.sm.updateShapes(writer => {
           writer.moveBottom([s]);
         }, true, true);

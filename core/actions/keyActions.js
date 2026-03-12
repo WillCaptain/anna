@@ -34,7 +34,11 @@ const keyActions = page => {
             if (document.activeElement !== document.body) {
                 return true;
             }
-            const copyResult = page.onCopy(page.getFocusedShapes());
+            const focused = page.getFocusedShapes();
+            // 记录被复制的原始 shape ID，供 Ctrl+Shift+V 粘贴为引用使用
+            page._copiedSourceIds   = focused.map(s => s.id);
+            page._copiedSourcePageId = page.id;
+            const copyResult = page.onCopy(focused);
             if (event.clipboardData && copyResult) {
                 event.preventDefault();
                 event.clipboardData.setData(`anna/${copyResult.type}`, JSON.stringify(copyResult.data));

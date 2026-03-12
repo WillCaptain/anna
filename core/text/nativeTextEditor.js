@@ -160,6 +160,19 @@ export const nativeTextEditor = (shape) => {
 
         focusEditor: () => getEl()?.focus(),
         blurEditor:  () => getEl()?.blur(),
+
+        /**
+         * 销毁编辑器：退出编辑态并移除所有事件监听。
+         */
+        destroy: () => {
+            self.unmount();
+            const el = getEl();
+            if (el && _inputHandler) {
+                el.removeEventListener('input', _inputHandler);
+                _inputHandler = null;
+            }
+            Object.keys(dataListeners).forEach(k => delete dataListeners[k]);
+        },
     };
 
     return self;

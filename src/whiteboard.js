@@ -9,7 +9,7 @@
 
 import {graph} from '@anna/core/base/graph.js';
 import {EVENT_TYPE} from '@anna/common/const.js';
-import {t} from './i18n.js';
+import {t, isZh} from './i18n.js';
 import {initPropertiesPanel, syncPanelFromShapes} from './propertiesPanel.js';
 import {iconTheme} from '@anna/plugins/icons/iconTheme.js';
 
@@ -137,7 +137,8 @@ import * as funnelChartMod      from '@anna/plugins/data/funnelChart.js';
 import * as gaugeChartMod       from '@anna/plugins/data/gaugeChart.js';
 import * as stackedBarChartMod  from '@anna/plugins/data/stackedBarChart.js';
 import * as hbarChartMod        from '@anna/plugins/data/hbarChart.js';
-// svg / vector
+// reference / svg / vector
+import * as referenceMod        from '@anna/core/shapes/reference.js';
 import * as svgMod              from '@anna/core/shapes/svg.js';
 // mind map
 import * as mindMod             from '@anna/plugins/mind/mind.js';
@@ -156,7 +157,7 @@ const SHAPE_MODULES = [
     tableMod, barChartMod, lineChartMod, pieChartMod, areaChartMod,
     donutChartMod, scatterChartMod, radarChartMod, funnelChartMod,
     gaugeChartMod, stackedBarChartMod, hbarChartMod,
-    svgMod,
+    svgMod, referenceMod,
     mindMod, topicMod, subTopicMod,
 ];
 
@@ -305,6 +306,10 @@ const btnZoomIn      = $('btn-zoom-in');
 const btnZoomOut     = $('btn-zoom-out');
 const btnZoomFit     = $('btn-zoom-fit');
 const btnTheme       = $('btn-theme');
+const btnSave        = $('btn-save');
+const btnSaveDropdown = $('btn-save-dropdown');
+const saveDropdown   = $('save-dropdown');
+const saveGroup      = $('save-group');
 const zoomLabel      = $('zoom-label');
 const statusTool     = $('status-tool');
 const statusShapes   = $('status-shapes');
@@ -329,6 +334,8 @@ async function initEngine() {
     annPage = g.addPage('Page 1', undefined, canvasDiv);
     // 引擎创建页面后立即设置页面背景色（否则 page.backColor 默认 'white'）
     annPage.backColor = CANVAS_THEMES[currentThemeIndex].canvasBg;
+    // 单选框颜色与多选框（groupBox）保持一致，使用紫色强调色
+    annPage.focusFrameColor = '#7c6ff7';
 
     // 白板就绪后自动拉取所有 API 数据源（fire-and-forget）
     fetchAllDataSources(g, annPage);
@@ -580,7 +587,7 @@ function buildThemeDropdown() {
         btn.setAttribute('role', 'option');
         btn.innerHTML = `
             <span class="theme-swatch" style="background:${theme.canvasBg}"></span>
-            <span class="theme-opt-label">${theme.label}</span>
+            <span class="theme-opt-label">${t('theme.' + theme.id)}</span>
             <svg class="theme-opt-check" viewBox="0 0 12 10" fill="none">
                 <path d="M1 5l3.5 3.5L11 1" stroke="currentColor" stroke-width="1.8"
                       stroke-linecap="round" stroke-linejoin="round"/>
@@ -673,11 +680,201 @@ function applyCanvasTheme() {
 
     // ── 主题 chip 标签 ──
     const chip = document.getElementById('theme-chip');
+    const themeLabel = t('theme.' + theme.id);
     if (chip) {
-        chip.textContent   = theme.label;
+        chip.textContent   = themeLabel;
         chip.dataset.theme = theme.id;
     }
-    if (btnTheme) btnTheme.title = '主题（当前：' + theme.label + '）';
+    if (btnTheme) btnTheme.title = t('tooltip.theme') + ' (' + themeLabel + ')';
+}
+
+// ─── 存图（Save PNG） ─────────────────────────────────────────────────────────
+
+let _saveWithBg = false;  // 默认透明背景
+
+/** 同步下拉选项 active 状态 */
+function syncSaveDropdown() {
+    if (!saveDropdown) return;
+    saveDropdown.querySelectorAll('.save-opt').forEach(btn => {
+        const wantsBg = btn.dataset.bg === 'fill';
+        btn.classList.toggle('active', wantsBg === _saveWithBg);
+    });
+}
+
+/** 开关存图下拉 */
+function toggleSaveDropdown(e) {
+    e.stopPropagation();
+    if (!saveDropdown) return;
+    const isOpen = !saveDropdown.classList.contains('hidden');
+    if (isOpen) {
+        closeSaveDropdown();
+    } else {
+        saveDropdown.classList.remove('hidden');
+        saveGroup && saveGroup.classList.add('open');
+        syncSaveDropdown();
+    }
+}
+
+function closeSaveDropdown() {
+    saveDropdown && saveDropdown.classList.add('hidden');
+    saveGroup && saveGroup.classList.remove('open');
+}
+
+/**
+ * 计算形状列表的逻辑包围盒（含旋转）
+ * 使用 shape.getShapeFrame() 以正确处理旋转后的实际边界。
+ */
+function _computeLogicalBounds(shapes) {
+    let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
+    shapes.forEach(s => {
+        let f;
+        try { f = s.getShapeFrame ? s.getShapeFrame() : null; } catch (_) { f = null; }
+        if (f && isFinite(f.x1)) {
+            x1 = Math.min(x1, f.x1); y1 = Math.min(y1, f.y1);
+            x2 = Math.max(x2, f.x2); y2 = Math.max(y2, f.y2);
+        } else {
+            x1 = Math.min(x1, s.x);           y1 = Math.min(y1, s.y);
+            x2 = Math.max(x2, s.x + s.width); y2 = Math.max(y2, s.y + s.height);
+        }
+    });
+    return {x1, y1, x2, y2};
+}
+
+/**
+ * 将一个形状绘制到输出 canvas 上。
+ * ctx 已应用 ctx.scale(dpr, dpr)，绘制坐标单位为屏幕像素（page.scaleX 已含）。
+ */
+function _drawShapeOnCanvas(ctx, shape, originX, originY) {
+    const parent = shape.drawer?.parent;
+    if (!parent) return;
+    if (parent.style.visibility === 'hidden' || parent.style.display === 'none') return;
+
+    const pLeft = parseFloat(parent.style.left) || 0;
+    const pTop  = parseFloat(parent.style.top)  || 0;
+    const pW    = parseFloat(parent.style.width) || 0;
+    const pH    = parseFloat(parent.style.height) || 0;
+
+    const dx = pLeft - originX;
+    const dy = pTop  - originY;
+
+    ctx.save();
+    ctx.globalAlpha = (shape.globalAlpha !== undefined) ? shape.globalAlpha : 1;
+
+    // 旋转
+    const deg = shape.rotateDegree || 0;
+    if (deg !== 0) {
+        const cx = dx + pW / 2;
+        const cy = dy + pH / 2;
+        ctx.translate(cx, cy);
+        ctx.rotate(deg * Math.PI / 180);
+        ctx.translate(-cx, -cy);
+    }
+
+    // 优先使用 canvas 渲染（canvasGeometryDrawer 系列形状）
+    const staticCanvas = parent.querySelector('canvas[id^="static:"]');
+    if (staticCanvas && staticCanvas.width > 0 && staticCanvas.height > 0) {
+        const cl = parseFloat(staticCanvas.style.left)   || 0;
+        const ct = parseFloat(staticCanvas.style.top)    || 0;
+        const cw = parseFloat(staticCanvas.style.width)  || staticCanvas.width;
+        const ch = parseFloat(staticCanvas.style.height) || staticCanvas.height;
+        ctx.drawImage(staticCanvas, dx + cl, dy + ct, cw, ch);
+    } else {
+        // HTML 形状（rectangleDrawer）— 手动还原背景 + 边框 + 文字
+        const scale       = annPage ? annPage.scaleX : 1;
+        const backColor   = shape.getBackColor   ? shape.getBackColor()   : (shape.backColor   || '#fff');
+        const borderColor = shape.getBorderColor ? shape.getBorderColor() : (shape.borderColor || '#ccc');
+        const bw = (shape.borderWidth  || 1.5) * scale;
+        const cr = (shape.cornerRadius || 0)   * scale;
+
+        ctx.save();
+        ctx.fillStyle   = backColor;
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth   = bw;
+        ctx.beginPath();
+        if (cr > 0 && ctx.roundRect) {
+            ctx.roundRect(dx + bw / 2, dy + bw / 2, pW - bw, pH - bw, cr);
+        } else {
+            ctx.rect(dx + bw / 2, dy + bw / 2, pW - bw, pH - bw);
+        }
+        ctx.fill();
+        if (bw > 0) ctx.stroke();
+
+        if (shape.text) {
+            const fontSize  = Math.round((shape.fontSize || 14) * scale);
+            const fontColor = shape.fontColor || '#333';
+            ctx.fillStyle    = fontColor;
+            ctx.font         = `${fontSize}px sans-serif`;
+            ctx.textAlign    = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(shape.text, dx + pW / 2, dy + pH / 2);
+        }
+        ctx.restore();
+    }
+
+    ctx.restore();
+}
+
+/** 执行存图，withBg 参数覆盖全局 _saveWithBg（不传则用全局值） */
+function savePng(withBg = _saveWithBg) {
+    if (!annPage) return;
+
+    // 确定导出形状：有选中则只导出选中，否则全部
+    const focused = annPage.getFocusedShapes().filter(s => s.serializable !== false);
+    const shapesToExport = focused.length > 0
+        ? focused
+        : annPage.sm.shapes.filter(s => s.serializable !== false);
+
+    if (!shapesToExport.length) return;
+
+    const PAD = 16;  // 逻辑像素留白
+    const bounds = _computeLogicalBounds(shapesToExport);
+    if (!isFinite(bounds.x1)) return;
+
+    const lx1 = bounds.x1 - PAD;
+    const ly1 = bounds.y1 - PAD;
+    const lx2 = bounds.x2 + PAD;
+    const ly2 = bounds.y2 + PAD;
+
+    const scale = annPage.scaleX || 1;
+    const dpr   = window.devicePixelRatio || 1;
+    const outW  = Math.round((lx2 - lx1) * scale);   // 屏幕像素宽
+    const outH  = Math.round((ly2 - ly1) * scale);   // 屏幕像素高
+
+    const canvas = document.createElement('canvas');
+    canvas.width  = Math.round(outW * dpr);            // 物理像素
+    canvas.height = Math.round(outH * dpr);
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);                                // 以下绘制单位：屏幕像素
+
+    if (withBg) {
+        ctx.fillStyle = CANVAS_THEMES[currentThemeIndex].canvasBg;
+        ctx.fillRect(0, 0, outW, outH);
+    }
+
+    // 输出原点在 page.div 内的屏幕坐标偏移
+    const originX = (lx1 + annPage.x) * scale;
+    const originY = (ly1 + annPage.y) * scale;
+
+    // 按 Z 序绘制
+    const sorted = [...shapesToExport].sort((a, b) => {
+        const ia = a.getIndex ? a.getIndex() : 0;
+        const ib = b.getIndex ? b.getIndex() : 0;
+        return ia - ib;
+    });
+    sorted.forEach(s => _drawShapeOnCanvas(ctx, s, originX, originY));
+
+    // 触发下载
+    canvas.toBlob(blob => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a   = document.createElement('a');
+        a.download = `anna-${Date.now()}.png`;
+        a.href = url;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }, 'image/png');
 }
 
 // ─── 键盘快捷键 ───────────────────────────────────────────────────────────────
@@ -709,14 +906,9 @@ function bindKeyboard() {
         // Ctrl+0 — 适应屏幕（引擎无此快捷键）
         if ((e.ctrlKey || e.metaKey) && e.key === '0') { e.preventDefault(); fitScreen(); return; }
 
-        // 单字母工具切换（无修饰键时）
-        if (!e.ctrlKey && !e.metaKey && !e.altKey) {
-            const keyMap = {
-                v: 'select', r: 'rectangle', e: 'ellipse',
-                t: 'triangle', d: 'diamond', l: 'line', f: 'freeLine',
-                p: 'parallelogram', a: 'rightArrow',
-            };
-            if (keyMap[e.key.toLowerCase()]) { setTool(keyMap[e.key.toLowerCase()]); return; }
+        // V 键切换回选择工具（无修饰键）
+        if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'v') {
+            setTool('select'); return;
         }
 
         // +/- 缩放（引擎使用 Shift+=/-，此处补充无 Shift 写法）
@@ -761,13 +953,27 @@ function bindButtons() {
     btnZoomOut.addEventListener('click', () => setZoom(-ZOOM_STEP));
     btnZoomFit.addEventListener('click', fitScreen);
     btnTheme && btnTheme.addEventListener('click', toggleThemeDropdown);
-    // 点击下拉区以外时关闭
+
+    // ── 存图按钮绑定 ──
+    btnSave && btnSave.addEventListener('click', () => savePng());
+    btnSaveDropdown && btnSaveDropdown.addEventListener('click', toggleSaveDropdown);
+    saveDropdown && saveDropdown.addEventListener('click', e => {
+        const opt = e.target.closest('.save-opt');
+        if (!opt) return;
+        _saveWithBg = opt.dataset.bg === 'fill';
+        syncSaveDropdown();
+        closeSaveDropdown();
+        savePng(_saveWithBg);
+    });
+
+    // 点击下拉区以外时关闭（主题 + 存图）
     document.addEventListener('click', e => {
         if (themePicker && !themePicker.contains(e.target)) closeThemeDropdown();
+        if (saveGroup   && !saveGroup.contains(e.target))   closeSaveDropdown();
     });
     // Esc 关闭
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') closeThemeDropdown();
+        if (e.key === 'Escape') { closeThemeDropdown(); closeSaveDropdown(); }
     });
     buildThemeDropdown();
 }
@@ -800,6 +1006,14 @@ export async function initWhiteboard() {
             setTool('select');
             updateHistoryBtns();
             updateStatusBar();
+        });
+
+        // 粘贴/删除等操作不一定触发 SHAPE_ADDED，通过 PAGE_DIRTY 做兜底
+        // 使用 debounce 避免高频操作时状态栏频繁闪烁
+        let _statusDebounce = null;
+        g.addEventListener(EVENT_TYPE.PAGE_DIRTY, () => {
+            clearTimeout(_statusDebounce);
+            _statusDebounce = setTimeout(updateStatusBar, 80);
         });
 
         annPage.interactDrawer.getInteract().addEventListener('mouseup', () => {

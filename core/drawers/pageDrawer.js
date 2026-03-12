@@ -45,13 +45,100 @@ const pageDrawer = (page, div, x, y) => {
     page.graph.setElementId(self.container, pageContainerId(page));
   };
 
+  // ─── LOD 覆盖层 ────────────────────────────────────────────────────────────
+  // 所有 LOD >= 2（屏幕 < 8px）的微小形状，统一画在这个全屏 canvas 上，
+  // 而不是各自维护独立 canvas（减少 GPU 合成层数）。
+  // 长线、大形状不受影响，它们始终走自己的 canvas 路径。
+  let _lodCanvas = null;
+  let _lodScheduled = false;
+  let _prevScaleX = page.scaleX;
+
+  const _getLodCanvas = () => {
+    if (!_lodCanvas) {
+      _lodCanvas = document.createElement('canvas');
+      _lodCanvas.style.cssText =
+        'position:absolute;top:0;left:0;pointer-events:none;z-index:4;';
+      div.appendChild(_lodCanvas);
+    }
+    return _lodCanvas;
+  };
+
+  self.scheduleLODRedraw = () => {
+    if (_lodScheduled) return;
+    _lodScheduled = true;
+    requestAnimationFrame(() => {
+      _lodScheduled = false;
+      self.drawLOD();
+    });
+  };
+
+  self.drawLOD = () => {
+    const w = div.clientWidth;
+    const h = div.clientHeight;
+    if (w === 0 || h === 0) return;
+    const canvas = _getLodCanvas();
+    canvas.width  = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, w, h);
+
+    const sx = page.scaleX, sy = page.scaleY;
+    const ox = page.x,      oy = page.y;
+
+    page.sm.getShapes(s => {
+      if (!s.visible || s.globalAlpha === 0) return false;
+      const lod = s.getLODLevel?.() ?? 0;
+      return lod >= 2;
+    }).forEach(s => {
+      const screenX = (s.x + ox) * sx;
+      const screenY = (s.y + oy) * sy;
+      const screenW = Math.abs(s.width  * sx);
+      const screenH = Math.abs(s.height * sy);
+      // 视口外的 LOD 形状直接跳过
+      if (screenX + screenW < 0 || screenX > w || screenY + screenH < 0 || screenY > h) return;
+
+      const lod = s.getLODLevel();
+      ctx.globalAlpha = s.globalAlpha ?? 1;
+      if (lod >= 3) {
+        // 单点
+        ctx.fillStyle = s.getBorderColor?.() || s.getBackColor?.() || '#888';
+        ctx.fillRect(screenX + screenW / 2 - 1, screenY + screenH / 2 - 1, 2, 2);
+      } else {
+        // 简化方块
+        ctx.fillStyle   = s.getBackColor?.()   || '#888';
+        ctx.strokeStyle = s.getBorderColor?.() || '#666';
+        ctx.lineWidth   = 0.5;
+        ctx.fillRect(  screenX, screenY, screenW, screenH);
+        ctx.strokeRect(screenX, screenY, screenW, screenH);
+      }
+    });
+  };
+  // ────────────────────────────────────────────────────────────────────────────
+
   self.transform = () => {
+    const scaleChanged = _prevScaleX !== page.scaleX;
+    _prevScaleX = page.scaleX;
+
     let scale = `scale(${page.scaleX},${page.scaleY})`;
     let translate = ` translate(${page.x}px,${page.y}px)`;
     self.container.style.transform = scale + translate;
     self.drawBackground();
     self.drawRegions();
-    page.sm.getShapes().forEach(s => s.refresh && s.refresh());
+    page.sm.getShapes().forEach(s => {
+      if (s.refresh) {
+        s.refresh();
+      }
+      // 重新检查曾被性能裁剪隐藏的形状（视口剔除 / LOD）
+      // 仅 LOD 形状在缩放时需要重检（缩放改变 LOD 等级）
+      // 视口裁剪的形状在每次 pan/zoom 后都需要重检
+      if (s._hiddenByPerf) {
+        s.invalidateAlone?.();
+      }
+    });
+    // LOD 覆盖层跟随 pan/zoom 重绘（形状的屏幕坐标已变）
+    self.scheduleLODRedraw();
+    // 多选包围框跟随 pan/zoom 重绘
+    page.interactDrawer?.groupBox?.draw();
   };
 
   self.move = () => {

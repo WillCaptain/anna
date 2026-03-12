@@ -4,6 +4,7 @@
 
 import { colorField, rangeField, numberField, selectField, tabField } from './fieldDef.js';
 import { PROGRESS_STATUS, INFO_TYPE, LINEMODE } from '../../common/const.js';
+import { t } from '../../src/i18n.js';
 
 // ── SVG icons for tab bar ──────────────────────────────────────────────────────
 const TAB_ICON = {
@@ -42,9 +43,9 @@ const lineModeGetter        = raw => raw?.type ?? 'straight';
 export const baseDisplayFields = () => [
 
     // ── Tab 1: 样式 ───────────────────────────────────────────────────────────
-    tabField('style', '样式', [
+    tabField('style', t('prop.tab.style'), [
 
-        colorField('backColor', '填充', {
+        colorField('backColor', t('prop.fill'), {
             order: 1,
             onChange: (shapes, value) => {
                 shapes.forEach(s => {
@@ -61,7 +62,7 @@ export const baseDisplayFields = () => [
             order: 2,
         }),
 
-        colorField('borderColor', '边框', {
+        colorField('borderColor', t('prop.border'), {
             order: 3,
             onChange: (shapes, value) => {
                 shapes.forEach(s => {
@@ -78,7 +79,7 @@ export const baseDisplayFields = () => [
             order: 4,
         }),
 
-        rangeField('cornerRadius', '圆角', {
+        rangeField('cornerRadius', t('prop.radius'), {
             min: 0, max: 60, step: 1,
             format: v => v + 'px',
             order: 5,
@@ -87,17 +88,17 @@ export const baseDisplayFields = () => [
     ], { order: 1, icon: TAB_ICON.style }),
 
     // ── Tab 2: 文字 ───────────────────────────────────────────────────────────
-    tabField('text', '文字', [
+    tabField('text', t('prop.tab.text'), [
 
-        colorField('fontColor', '颜色', { order: 1 }),
+        colorField('fontColor', t('prop.color'), { order: 1 }),
 
-        numberField('fontSize', '大小', {
+        numberField('fontSize', t('prop.size'), {
             min: 6, max: 200, step: 1,
             inlineWith: 'fontColor',
             order: 2,
         }),
 
-        selectField('hAlign', '对齐', [
+        selectField('hAlign', t('prop.align'), [
             {
                 value: 'left',
                 label: 'L',
@@ -118,7 +119,7 @@ export const baseDisplayFields = () => [
     ], { order: 2, icon: TAB_ICON.text }),
 
     // ── Tab 3: 位置 ───────────────────────────────────────────────────────────
-    tabField('position', '位置', [
+    tabField('position', t('prop.tab.pos'), [
 
         numberField('x',      'X', { order: 1, step: 1 }),
         numberField('y',      'Y', { order: 2, step: 1 }),
@@ -130,12 +131,12 @@ export const baseDisplayFields = () => [
     // ── Tab 4: 状态 ───────────────────────────────────────────────────────────
     // 对应引擎的 rectangle.js 快捷键：Ctrl+E (关注) / Ctrl+1~9 (优先级) /
     //   Ctrl+I (提示徽章) / Ctrl+G (进度条) / Ctrl+Shift+S (状态)
-    tabField('state', '状态', [
+    tabField('state', t('prop.tab.state'), [
 
         // 关注（emphasized） — Ctrl+E，高亮光晕动画
-        selectField('emphasized', '关注', [
-            { value: 'false', label: '关' },
-            { value: 'true',  label: '开' },
+        selectField('emphasized', t('prop.follow'), [
+            { value: 'false', label: t('opt.off') },
+            { value: 'true',  label: t('opt.on') },
         ], {
             style: 'buttons',
             order: 1,
@@ -143,7 +144,7 @@ export const baseDisplayFields = () => [
         }),
 
         // 优先级（priority）— Ctrl+数字键，0 = 无
-        selectField('priority', '优先级', [
+        selectField('priority', t('prop.priority'), [
             { value: '0', label: '—' },
             { value: '1', label: '1' },
             { value: '2', label: '2' },
@@ -157,15 +158,15 @@ export const baseDisplayFields = () => [
         }),
 
         // 任务状态（progressStatus）— 下拉
-        selectField('progressStatus', '任务', [
-            { value: 'NONE',       label: '无' },
-            { value: 'NOTSTARTED', label: '待开始' },
-            { value: 'DOING',      label: '进行中' },
-            { value: 'RUNNING',    label: '运行中' },
-            { value: 'PAUSE',      label: '暂停' },
-            { value: 'COMPLETE',   label: '完成' },
-            { value: 'ERROR',      label: '错误' },
-            { value: 'UNKNOWN',    label: '未知' },
+        selectField('progressStatus', t('prop.task'), [
+            { value: 'NONE',       label: t('opt.none') },
+            { value: 'NOTSTARTED', label: t('opt.notStarted') },
+            { value: 'DOING',      label: t('opt.doing') },
+            { value: 'RUNNING',    label: t('opt.running') },
+            { value: 'PAUSE',      label: t('opt.pause') },
+            { value: 'COMPLETE',   label: t('opt.complete') },
+            { value: 'ERROR',      label: t('opt.error') },
+            { value: 'UNKNOWN',    label: t('opt.unknown') },
         ], {
             style: 'dropdown',
             order: 3,
@@ -174,8 +175,8 @@ export const baseDisplayFields = () => [
         }),
 
         // 提示徽章（infoType）— Ctrl+I，右上角角标
-        selectField('infoType', '提示', [
-            { value: 'none',        label: '无',
+        selectField('infoType', t('prop.badge'), [
+            { value: 'none',        label: t('opt.none'),
               icon: '<svg viewBox="0 0 14 14" width="11" height="11" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 1.5" opacity=".5"/></svg>' },
             { value: 'information', label: '?',
               icon: '<svg viewBox="0 0 14 14" width="11" height="11" fill="none"><circle cx="7" cy="7" r="5.5" fill="#4fc3f7" fill-opacity=".2" stroke="#4fc3f7" stroke-width="1.2"/><text x="7" y="10.5" text-anchor="middle" font-size="7" font-weight="700" fill="#4fc3f7">?</text></svg>' },
@@ -199,7 +200,7 @@ export const baseDisplayFields = () => [
  * 单 tab 布局（只有位置 tab）。
  */
 export const geometryOnlyFields = () => [
-    tabField('position', '位置', [
+    tabField('position', t('prop.tab.pos'), [
         numberField('x',      'X', { order: 1 }),
         numberField('y',      'Y', { order: 2 }),
         numberField('width',  'W', { min: 1, order: 3 }),
@@ -216,9 +217,9 @@ export const geometryOnlyFields = () => [
 export const lineDisplayFields = () => [
 
     // ── Tab 1: 样式 ───────────────────────────────────────────────────────────
-    tabField('style', '样式', [
+    tabField('style', t('prop.tab.style'), [
 
-        colorField('borderColor', '颜色', {
+        colorField('borderColor', t('prop.color'), {
             order: 1,
             onChange: (shapes, value) => {
                 shapes.forEach(s => { s.borderColor = value; });
@@ -232,32 +233,32 @@ export const lineDisplayFields = () => [
             order: 2,
         }),
 
-        rangeField('globalAlpha', '透明', {
+        rangeField('globalAlpha', t('prop.alpha'), {
             min: 0, max: 1, step: 0.01,
             format: v => Math.round(v * 100) + '%',
             order: 3,
         }),
 
         // 曲线模式 — Ctrl+L 循环切换
-        selectField('lineMode', '曲线', [
+        selectField('lineMode', t('prop.curve'), [
             {
                 value: 'straight',
-                label: '直线',
+                label: t('opt.straight'),
                 icon: '<svg viewBox="0 0 20 14" width="18" height="10" fill="none"><line x1="2" y1="7" x2="18" y2="7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
             },
             {
                 value: 'auto_curve',
-                label: '弧线',
+                label: t('opt.arc'),
                 icon: '<svg viewBox="0 0 20 14" width="18" height="10" fill="none"><path d="M2 11 C6 2, 14 2, 18 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>',
             },
             {
                 value: 'broken',
-                label: '折线',
+                label: t('opt.broken'),
                 icon: '<svg viewBox="0 0 20 14" width="18" height="10" fill="none"><polyline points="2,11 8,3 12,3 18,11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
             },
             {
                 value: 'curve',
-                label: '曲线',
+                label: t('opt.curveLine'),
                 icon: '<svg viewBox="0 0 20 14" width="18" height="10" fill="none"><path d="M2 11 C4 2, 10 12, 12 4 S18 2 18 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>',
             },
         ], {
@@ -270,9 +271,9 @@ export const lineDisplayFields = () => [
         }),
 
         // 流光效果
-        selectField('allowShine', '流光', [
-            { value: 'false', label: '关' },
-            { value: 'true',  label: '开' },
+        selectField('allowShine', t('prop.shine'), [
+            { value: 'false', label: t('opt.off') },
+            { value: 'true',  label: t('opt.on') },
         ], {
             style: 'buttons',
             order: 5,
@@ -282,7 +283,7 @@ export const lineDisplayFields = () => [
     ], { order: 1, icon: TAB_ICON.style }),
 
     // ── Tab 2: 位置 ───────────────────────────────────────────────────────────
-    tabField('position', '位置', [
+    tabField('position', t('prop.tab.pos'), [
         numberField('x',      'X', { order: 1, step: 1 }),
         numberField('y',      'Y', { order: 2, step: 1 }),
         numberField('width',  'W', { min: 1, order: 3, step: 1 }),

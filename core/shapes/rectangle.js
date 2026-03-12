@@ -3,6 +3,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import {ALIGN, DIRECTION, FONT_WEIGHT, INFO_TYPE, PROGRESS_STATUS, ANNA_NAME_SPACE} from '../../common/const.js';
+import {t} from '../../src/i18n.js';
 import {
   convertPositionWithParents,
   getPixelRatio,
@@ -96,7 +97,7 @@ const rectangle = (id, x, y, width, height, parent, drawer = rectangleDrawer) =>
       return undefined;
     }
     menus.push({
-      text: '评论', action: (shapeArg) => {
+      text: t('menu.comment'), action: (shapeArg) => {
         let comment = shapeComment(shapeArg.x + (shapeArg.width / 2), shapeArg.y + (shapeArg.height / 2), shapeArg);
         comment.invalidate();
         comment.beginEdit();
@@ -114,7 +115,7 @@ const rectangle = (id, x, y, width, height, parent, drawer = rectangleDrawer) =>
       return menus;
     }
     menus.push({
-      text: `${(self.emphasized ? '取消' : '')}关注`,
+      text: self.emphasized ? t('menu.unfollow') : t('menu.follow'),
       action: shapeArg => shapeArg.emphasized = !shapeArg.emphasized,
       draw: (context) => {
         context.strokeStyle = 'dimgray';
@@ -131,7 +132,7 @@ const rectangle = (id, x, y, width, height, parent, drawer = rectangleDrawer) =>
     menus.push({});
     // 优先级
     const priorities = {
-      text: '优先级别', menus: [], draw: (context) => {
+      text: t('menu.priority'), menus: [], draw: (context) => {
         context.strokeStyle = 'red';
         context.strokeRect(-3, -3, 3, 1);
         context.strokeStyle = 'dimgray';
@@ -155,11 +156,11 @@ const rectangle = (id, x, y, width, height, parent, drawer = rectangleDrawer) =>
         },
       });
     }
-    priorities.menus.push({text: '无', action: shapeArg => shapeArg.priority = 0});
+    priorities.menus.push({text: t('menu.none'), action: shapeArg => shapeArg.priority = 0});
     menus.push(priorities);
     // 信息
     const warns = {
-      text: '提示信息', menus: [], draw: (context) => {
+      text: t('menu.badge'), menus: [], draw: (context) => {
         context.fillStyle = 'red';
         context.fillRect(-4, -1, 2, 2);
         context.fillRect(-1, -1, 2, 2);
@@ -167,31 +168,31 @@ const rectangle = (id, x, y, width, height, parent, drawer = rectangleDrawer) =>
       },
     };
     warns.menus.push({
-      text: '提示', action: shapeArg => shapeArg.infoType = INFO_TYPE.INFORMATION, draw: (context) => {
+      text: t('menu.hint'), action: shapeArg => shapeArg.infoType = INFO_TYPE.INFORMATION, draw: (context) => {
         context.fillStyle = 'steelblue';
         context.font = 'bold 11px Arial';
         context.fillText('?', -3, 4);
       },
     });
     warns.menus.push({
-      text: '警告', action: shapeArg => shapeArg.infoType = INFO_TYPE.WARNING, draw: (context) => {
+      text: t('menu.warning'), action: shapeArg => shapeArg.infoType = INFO_TYPE.WARNING, draw: (context) => {
         context.fillStyle = 'darkorange';
         context.font = 'bold 11px Arial';
         context.fillText('!', -3, 4);
       },
     });
     warns.menus.push({
-      text: '错误', action: shapeArg => shapeArg.infoType = INFO_TYPE.ERROR, draw: (context) => {
+      text: t('menu.error'), action: shapeArg => shapeArg.infoType = INFO_TYPE.ERROR, draw: (context) => {
         context.fillStyle = 'red';
         context.font = 'bold 11px Arial';
         context.fillText('×', -4, 4);
       },
     });
-    warns.menus.push({text: '无', action: shapeArg => shapeArg.infoType = INFO_TYPE.NONE});
+    warns.menus.push({text: t('menu.none'), action: shapeArg => shapeArg.infoType = INFO_TYPE.NONE});
     menus.push(warns);
     // 状态
     const status = {
-      text: '状态设置', menus: [], draw: (context) => {
+      text: t('menu.status'), menus: [], draw: (context) => {
         context.fillStyle = 'red';
         context.fillRect(-3, -3, 2, 6);
         context.fillStyle = 'dimgray';
@@ -203,7 +204,7 @@ const rectangle = (id, x, y, width, height, parent, drawer = rectangleDrawer) =>
       },
     };
     status.menus.push({
-      text: '未开始', action: shapeArg => shapeArg.progressStatus = PROGRESS_STATUS.NOTSTARTED, draw: (context) => {
+      text: t('menu.notStarted'), action: shapeArg => shapeArg.progressStatus = PROGRESS_STATUS.NOTSTARTED, draw: (context) => {
         context.arc(0, 0, 4, 0, 2 * Math.PI);
         context.stroke();
         context.beginPath();
@@ -212,7 +213,7 @@ const rectangle = (id, x, y, width, height, parent, drawer = rectangleDrawer) =>
       },
     });
     status.menus.push({
-      text: '进行中', action: shapeArg => shapeArg.progressStatus = PROGRESS_STATUS.DOING, draw: (context) => {
+      text: t('menu.doing'), action: shapeArg => shapeArg.progressStatus = PROGRESS_STATUS.DOING, draw: (context) => {
         const STEPS = 10;
         context.fillStyle = 'gray';
         for (let i = 0; i < STEPS; i++) {
@@ -222,7 +223,7 @@ const rectangle = (id, x, y, width, height, parent, drawer = rectangleDrawer) =>
       },
     });
     status.menus.push({
-      text: '运行中', action: shapeArg => shapeArg.progressStatus = PROGRESS_STATUS.RUNNING, draw: (context) => {
+      text: t('menu.running'), action: shapeArg => shapeArg.progressStatus = PROGRESS_STATUS.RUNNING, draw: (context) => {
         context.fillStyle = 'steelblue';
         context.moveTo(-3, -3);
         context.lineTo(3, 0);
@@ -232,14 +233,14 @@ const rectangle = (id, x, y, width, height, parent, drawer = rectangleDrawer) =>
       },
     });
     status.menus.push({
-      text: '暂停', action: shapeArg => shapeArg.progressStatus = PROGRESS_STATUS.PAUSE, draw: (context) => {
+      text: t('menu.pause'), action: shapeArg => shapeArg.progressStatus = PROGRESS_STATUS.PAUSE, draw: (context) => {
         context.fillStyle = 'red';
         context.fillRect(-3, -4, 2, 8);
         context.fillRect(1, -4, 2, 8);
       },
     });
     status.menus.push({
-      text: '完成', action: shapeArg => shapeArg.progressStatus = PROGRESS_STATUS.COMPLETE, draw: (context) => {
+      text: t('menu.complete'), action: shapeArg => shapeArg.progressStatus = PROGRESS_STATUS.COMPLETE, draw: (context) => {
         const x0 = -3;
         const y0 = 1;
         context.strokeStyle = 'green';
@@ -250,24 +251,24 @@ const rectangle = (id, x, y, width, height, parent, drawer = rectangleDrawer) =>
       },
     });
     status.menus.push({
-      text: '错误', action: shapeArg => shapeArg.progressStatus = PROGRESS_STATUS.ERROR, draw: (context) => {
+      text: t('menu.error'), action: shapeArg => shapeArg.progressStatus = PROGRESS_STATUS.ERROR, draw: (context) => {
         context.fillStyle = 'darkred';
         context.font = 'bold 11px Arial';
         context.fillText('×', -4, 4);
       },
     });
     status.menus.push({
-      text: '未知', action: shapeArg => shapeArg.progressStatus = PROGRESS_STATUS.UNKNOWN, draw: (context) => {
+      text: t('menu.unknown'), action: shapeArg => shapeArg.progressStatus = PROGRESS_STATUS.UNKNOWN, draw: (context) => {
         context.fillStyle = 'dimgray';
         context.font = 'bold 11px Arial';
         context.fillText('?', -3, 4);
       },
     });
-    status.menus.push({text: '无', action: shapeArg => shapeArg.progressStatus = PROGRESS_STATUS.NONE});
+    status.menus.push({text: t('menu.none'), action: shapeArg => shapeArg.progressStatus = PROGRESS_STATUS.NONE});
     menus.push(status);
     // 进度
     const progress = {
-      text: '进度设置', menus: [], draw: (context) => {
+      text: t('menu.progress'), menus: [], draw: (context) => {
         context.fillStyle = 'green';
         context.strokeRect(-4, -2, 8, 4);
         context.fillRect(-3, -1, 4, 2);
@@ -569,6 +570,10 @@ const rectangle = (id, x, y, width, height, parent, drawer = rectangleDrawer) =>
       c3moving(self, deltaX, deltaY, x, y);
     };
     c7.type = 'rightBottom';
+    // Use square handles for resize connectors (consistent with multi-select groupBox style)
+    [c0, c1, c2, c3, c4, c5, c6, c7].forEach(c => { c.shapeStyle = 'rect'; });
+    // Use accent purple stroke for resize handles to match multi-select groupBox style
+    [c0, c1, c2, c3, c4, c5, c6, c7].forEach(c => { c.strokeStyle = '#7c6ff7'; });
     // ??
     let c8 = connector(self,
       (s, c) => c.frame.x - s.x + c.frame.width / 2,
@@ -594,6 +599,7 @@ const rectangle = (id, x, y, width, height, parent, drawer = rectangleDrawer) =>
       self.rotateDegree = Math.round(deg / 10) * 10;
     };
     c8.type = 'rotate';
+    c8.strokeStyle = '#7c6ff7'; // match multi-select groupBox rotate handle color
     self.rotateConnector = c8;
 
     self.createUndragableConnector({

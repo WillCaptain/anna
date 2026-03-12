@@ -322,6 +322,8 @@ export const copyPasteHelper = () => {
         });
         // 添加命令，支持撤销重做.
         addCommand(targetPage, newShapes);
+        // 显式触发 PAGE_DIRTY，确保状态栏形状计数在粘贴后立即更新
+        targetPage.triggerEvent({type: EVENT_TYPE.PAGE_DIRTY, value: targetPage.id});
         return newShapes;
     };
 

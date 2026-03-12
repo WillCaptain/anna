@@ -13,6 +13,8 @@
  * 完全多态：面板内容由 shape 自身决定，whiteboard 无需 if-type 判断。
  */
 
+import { t } from './i18n.js';
+
 // ─── 状态 ─────────────────────────────────────────────────────────────────────
 
 let _panel        = null;   // aside#properties-panel
@@ -394,25 +396,25 @@ function _makeActionControl(field, container) {
 
     const btn = document.createElement('button');
     btn.className   = 'prop-action-btn';
-    btn.textContent = field.btnLabel ?? '执行';
+    btn.textContent = field.btnLabel ?? t('action.run');
 
     const statusEl = document.createElement('span');
     statusEl.className = 'prop-action-status';
     statusEl.dataset.actionStatus = field.key;
-    statusEl.textContent = '未获取';
+    statusEl.textContent = t('action.notFetched');
 
     const handler = async () => {
         if (!_shapes.length) return;
         btn.disabled    = true;
-        btn.textContent = '获取中…';
-        statusEl.textContent = '获取中…';
+        btn.textContent = t('action.fetching');
+        statusEl.textContent = t('action.fetching');
 
         if (field.onClick) {
             await field.onClick(_shapes, _graph);
         }
 
         btn.disabled    = false;
-        btn.textContent = field.btnLabel ?? '执行';
+        btn.textContent = field.btnLabel ?? t('action.run');
 
         // Re-sync values to refresh status text from shape._dsStatus
         const primary = _shapes[0];
@@ -461,7 +463,7 @@ function _updateSingleField(field, shape) {
     if (field.type === 'action') {
         if (!field.statusKey) return;
         const statusEl = _panel.querySelector(`[data-action-status="${field.key}"]`);
-        if (statusEl) statusEl.textContent = shape[field.statusKey] ?? '未获取';
+        if (statusEl) statusEl.textContent = shape[field.statusKey] ?? t('action.notFetched');
         return;
     }
 

@@ -24,6 +24,12 @@
     <nav class="home-nav">
       <a href="#" class="nav-link" data-i18n="nav.docs">文档</a>
       <a href="#" class="nav-link" data-i18n="nav.about">关于</a>
+      <a href="/" class="nav-link nav-link-12th" data-i18n="nav.12th">12th.ai ↗</a>
+      <div id="anna-user-chip" class="anna-user-chip hidden">
+        <span class="anna-chip-name" id="anna-chip-name"></span>
+        <button class="anna-btn-logout" id="anna-btn-logout" data-i18n="nav.logout">退出</button>
+      </div>
+      <button class="anna-btn-login" id="anna-btn-login" data-i18n="nav.login">登录</button>
     </nav>
   </header>
 
@@ -125,7 +131,7 @@
   <header id="toolbar">
 
     <!-- 品牌 + 返回首页 -->
-    <button class="toolbar-brand" id="btn-home" title="返回首页">
+    <button class="toolbar-brand" id="btn-home" title="返回首页" data-i18n-title="tooltip.home">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
               stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -137,7 +143,7 @@
 
     <!-- 选择工具 -->
     <div class="tool-group" id="tool-group">
-      <button class="tool-btn active" data-tool="select" title="选择 (V)">
+      <button class="tool-btn active" data-tool="select" title="选择 (V)" data-i18n-title="tooltip.select">
         <svg viewBox="0 0 24 24"><path d="M4 2l16 10-7.5 1.5L9 21 4 2z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
       </button>
     </div>
@@ -146,13 +152,13 @@
 
     <!-- 操作组 -->
     <div class="action-group">
-      <button class="action-btn" id="btn-undo" title="撤销 (Ctrl+Z)" disabled>
+      <button class="action-btn" id="btn-undo" title="撤销 (Ctrl+Z)" data-i18n-title="tooltip.undo" disabled>
         <svg viewBox="0 0 24 24"><path d="M3 7h10a5 5 0 010 10H8" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M3 7l4-4M3 7l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       </button>
-      <button class="action-btn" id="btn-redo" title="重做 (Ctrl+Shift+Z)" disabled>
+      <button class="action-btn" id="btn-redo" title="重做 (Ctrl+Shift+Z)" data-i18n-title="tooltip.redo" disabled>
         <svg viewBox="0 0 24 24"><path d="M21 7H11a5 5 0 000 10h5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M21 7l-4-4M21 7l-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       </button>
-      <button class="action-btn danger" id="btn-delete" title="删除 (Del)" disabled>
+      <button class="action-btn danger" id="btn-delete" title="删除 (Del)" data-i18n-title="tooltip.delete" disabled>
         <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
       </button>
     </div>
@@ -161,28 +167,50 @@
 
     <!-- 缩放控制 -->
     <div class="zoom-group">
-      <button class="icon-btn" id="btn-zoom-out" title="缩小 (-)">
+      <button class="icon-btn" id="btn-zoom-out" title="缩小 (-)" data-i18n-title="tooltip.zoomOut">
         <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M8 11h6M20 20l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       </button>
       <span class="zoom-label" id="zoom-label">100%</span>
-      <button class="icon-btn" id="btn-zoom-in" title="放大 (+)">
+      <button class="icon-btn" id="btn-zoom-in" title="放大 (+)" data-i18n-title="tooltip.zoomIn">
         <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M11 8v6M8 11h6M20 20l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       </button>
-      <button class="icon-btn" id="btn-zoom-fit" title="适应画布 (Ctrl+0)">
+      <button class="icon-btn" id="btn-zoom-fit" title="适应画布 (Ctrl+0)" data-i18n-title="tooltip.zoomFit">
         <svg viewBox="0 0 24 24"><path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
       </button>
     </div>
 
     <div class="toolbar-divider"></div>
 
+    <!-- 存图按钮组 -->
+    <div class="save-group" id="save-group">
+      <button class="save-main-btn" id="btn-save" title="存图" data-i18n-title="tooltip.save">
+        <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
+          <path d="M12 3v13M7 11l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4 20h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <span data-i18n="tooltip.save">存图</span>
+      </button>
+      <button class="save-chevron-btn" id="btn-save-dropdown" aria-label="存图选项" aria-expanded="false" aria-haspopup="listbox">
+        <svg viewBox="0 0 10 6" fill="none" width="8" height="8">
+          <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="save-dropdown hidden" id="save-dropdown" role="listbox">
+        <button class="save-opt active" data-bg="transparent" data-i18n="save.transparent">透明背景</button>
+        <button class="save-opt" data-bg="fill" data-i18n="save.withBg">带画布背景</button>
+      </div>
+    </div>
+
+    <div class="toolbar-divider"></div>
+
     <!-- 主题选择器（下拉） -->
     <div class="theme-picker" id="theme-picker">
-      <button class="icon-btn theme-btn" id="btn-theme" title="主题">
+      <button class="icon-btn theme-btn" id="btn-theme" title="主题" data-i18n-title="tooltip.theme">
         <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
           <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/>
           <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
         </svg>
-        <span class="theme-chip" id="theme-chip" data-theme="light">浅色</span>
+        <span class="theme-chip" id="theme-chip" data-theme="dark" data-i18n="theme.dark">深色</span>
         <svg class="theme-chevron" viewBox="0 0 10 6" fill="none" width="8" height="8">
           <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -1421,6 +1449,25 @@
   </footer>
 
 </div><!-- /#whiteboard-view -->
+
+<!-- ─── Auth Modal ─── -->
+<div class="anna-modal-overlay hidden" id="anna-auth-modal">
+  <div class="anna-modal">
+    <div class="anna-modal-header">
+      <span class="anna-modal-title" data-i18n="auth.title">登录 / 注册</span>
+      <button class="anna-modal-close" id="anna-auth-close">✕</button>
+    </div>
+    <p class="anna-modal-hint" data-i18n="auth.hint">用户名 + 密码。新用户可直接注册。用户名唯一（a-z, 0-9, _）。</p>
+    <input class="anna-modal-input" id="anna-auth-username" type="text" placeholder="用户名" maxlength="32" autocomplete="username"/>
+    <input class="anna-modal-input" id="anna-auth-password" type="password" placeholder="密码" maxlength="64" autocomplete="current-password"/>
+    <div class="anna-modal-error" id="anna-auth-error"></div>
+    <div class="anna-modal-footer">
+      <button class="anna-btn-ghost" id="anna-auth-cancel">取消</button>
+      <button class="anna-btn-secondary" id="anna-auth-register" data-i18n="auth.register">注册</button>
+      <button class="anna-btn-primary" id="anna-auth-login" data-i18n="auth.login">登录</button>
+    </div>
+  </div>
+</div>
 
 <script type="module" src="/src/main.js"></script>
 </body>

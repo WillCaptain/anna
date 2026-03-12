@@ -20,9 +20,15 @@ const animationDrawer = (graph, page, div) => {
     }
 
     self.draw = () => {
-        page.sm.getShapes(s => s.enableAnimation).forEach(s => {
+        // 超过 1000 个形状时，动画全部暂停（`page.animate()` 里也做了同样检查）
+        if (page.sm.getShapeCount() > (page.animationMaxShapes ?? 1000)) {
+            page.drawer.drawDynamic && page.drawer.drawDynamic();
+            return;
+        }
+        // LOD >= 2（屏幕尺寸 < 8px）的形状太小，无需播放动画
+        page.sm.getShapes(s => s.enableAnimation && (s.getLODLevel?.() ?? 0) < 2).forEach(s => {
             s.drawer.drawAnimation();
-        })
+        });
         page.drawer.drawDynamic && page.drawer.drawDynamic();
         if (!page.animationCode) {
             return;
