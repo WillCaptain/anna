@@ -13,6 +13,7 @@ const canvasDatabaseDrawer = (shape, div, x, y) => {
     self.drawStatic = (context, px, py) => {
         const W  = shape.width  - 2;
         const H  = shape.height - 2;
+        if (W < 4 || H < 4) return;
         const bw = shape.borderWidth || 1.5;
         const ry = H * 0.14;
         const rx = W / 2;

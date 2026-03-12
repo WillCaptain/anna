@@ -6,77 +6,82 @@ import {canvasDrawer} from './canvasDrawer.js';
 import {drawer} from './htmlDrawer.js';
 
 /**
- * 绘制发光的边缘
- * 辉子 2021
+ * 绘制发光的边缘：4 个等间距亮点 + 渐变短尾，沿矩形边框顺时针匀速运行
  */
 const emphasizeShine = (context, x, y, shape, control) => {
-  let xVal = x;
-  let yVal = y;
-  xVal -= shape.width / 2;
-  yVal -= shape.height / 2;
-    const STEP = 0.01
-    let DIRECTION = { VERTICAL: 1, HORIZONTAL: 0 }
-    let drawShine = function (context, x, y, direction, lineLen) {
-        let x1;
-        let y1;
-        let x2;
-        let y2;
-        if (direction === DIRECTION.HORIZONTAL) {
-            x1 = x - lineLen / 2;
-            x2 = x + lineLen / 2;
-            y1 = y2 = y;
-        } else {
-            x1 = x2 = x;
-            y1 = y - lineLen / 2;
-            y2 = y + lineLen / 2;
-        }
-        let gradient = context.createLinearGradient(x1, y1, x2, y2);
-        gradient.addColorStop(0, "rgba(255,255,255,0");
-        let color1 = "sandybrown";
+    const W = shape.width;
+    const H = shape.height;
+    const perimeter = 2 * (W + H);
 
-        gradient.addColorStop(0.5, color1);
-        gradient.addColorStop(1, "rgba(255,255,255,0");
+    const now = performance.now();
+    const dt  = control.prevTime > 0 ? Math.min(now - control.prevTime, 100) : 0;
+    control.prevTime = now;
+
+    const SPEED    = 75;  // px/s（慢两倍）
+    const TAIL_LEN = 60;  // 尾迹长度（像素）
+    const DOT_R    = 2.5;
+    control.pixelPos = ((control.pixelPos ?? 0) + (dt / 1000) * SPEED) % perimeter;
+
+    // 将周长位置展开到各边坐标（以形状中心为原点，顺时针：上→右→下→左）
+    const drawDotWithTail = (pos) => {
+        const p = ((pos % perimeter) + perimeter) % perimeter;
+        let cx, cy, tx1, ty1;   // 亮点坐标 & 尾巴起点
+
+        if (p < W) {
+            const ep = p, ts = Math.max(0, ep - TAIL_LEN);
+            cx = -W/2 + ep;    cy = -H/2;
+            tx1 = -W/2 + ts;  ty1 = -H/2;
+        } else if (p < W + H) {
+            const ep = p - W, ts = Math.max(0, ep - TAIL_LEN);
+            cx = W/2;          cy = -H/2 + ep;
+            tx1 = W/2;         ty1 = -H/2 + ts;
+        } else if (p < 2*W + H) {
+            const ep = p - W - H, ts = Math.max(0, ep - TAIL_LEN);
+            cx = W/2 - ep;     cy = H/2;
+            tx1 = W/2 - ts;   ty1 = H/2;
+        } else {
+            const ep = p - 2*W - H, ts = Math.max(0, ep - TAIL_LEN);
+            cx = -W/2;         cy = H/2 - ep;
+            tx1 = -W/2;        ty1 = H/2 - ts;
+        }
+
+        context.save();
+
+        // 渐变尾巴（尾端透明 → 头部暖金色）
+        const tail = context.createLinearGradient(tx1, ty1, cx, cy);
+        tail.addColorStop(0,   'rgba(210,140,50,0)');
+        tail.addColorStop(0.6, 'rgba(230,165,75,0.50)');
+        tail.addColorStop(1,   'rgba(255,205,110,0.85)');
+        context.strokeStyle = tail;
+        context.lineWidth   = 2;
+        context.lineCap     = 'round';
         context.beginPath();
-        context.strokeStyle = gradient;
-        context.lineWidth = 1;
-        context.moveTo(x1, y1);
-        context.lineTo(x2, y2);
+        context.moveTo(tx1, ty1);
+        context.lineTo(cx, cy);
         context.stroke();
 
+        // 亮点辉光（白色中心 + 暖金外晕）
+        const grd = context.createRadialGradient(cx, cy, 0, cx, cy, DOT_R * 3);
+        grd.addColorStop(0,   'rgba(255,255,255,0.92)');
+        grd.addColorStop(0.4, 'rgba(255,220,140,0.40)');
+        grd.addColorStop(1,   'rgba(255,220,140,0)');
         context.beginPath();
-        context.fillStyle = "rgba(250,250,250,0.2)";
-        context.arc(x, y, 3, 0, 2 * Math.PI);
+        context.arc(cx, cy, DOT_R * 3, 0, Math.PI * 2);
+        context.fillStyle = grd;
         context.fill();
 
-        let r1 = 1;
-        let r2 = 4;
+        // 亮白芯
         context.beginPath();
-        let gStar = context.createRadialGradient(x, y, r1, x, y, r2);
-        gStar.addColorStop(0, color1);
-        gStar.addColorStop(1, 'RGBA(255,255,255,0.01)');
-        context.fillStyle = gStar;
-        context.arc(x, y, r2, 0, 2 * Math.PI);
+        context.arc(cx, cy, DOT_R * 0.7, 0, Math.PI * 2);
+        context.fillStyle = 'rgba(255,255,255,0.98)';
         context.fill();
+
+        context.restore();
     };
-    control.percent += STEP;
-    if (control.percent >= 1) {
-        control.times = 100;
-        control.percent = 0;
-        return;
+
+    for (let i = 0; i < 4; i++) {
+        drawDotWithTail(control.pixelPos + i * perimeter / 4);
     }
-    context.beginPath();
-    const os = 0;
-    drawShine(context, xVal + (control.percent * shape.width), yVal - os + shape.emphasizedOffset, DIRECTION.HORIZONTAL, shape.width); // up
-    // right
-    drawShine(context, xVal + shape.width - os - shape.emphasizedOffset + 1, yVal + (control.percent * shape.height), DIRECTION.VERTICAL, shape.height);
-    drawShine(context,
-      xVal + shape.width - (control.percent * shape.width),
-      yVal + shape.height - os - shape.emphasizedOffset + 1,
-        DIRECTION.HORIZONTAL,
-        shape.width
-    );// bottom
-    // left
-    drawShine(context, xVal - os + shape.emphasizedOffset, yVal + shape.height - (control.percent * shape.height), DIRECTION.VERTICAL, shape.height + 1);
 };
 
 /**
@@ -156,7 +161,7 @@ const rectangleDrawer = (shape, div, x, y) => {
         return autoHeightResize(self, shape, size);
     };
 
-    let control = { percent: 0, times: 0 };
+    let control = { percent: 0, times: 0, pixelPos: 0, prevTime: 0 };
     self.drawDynamic = (context, x, y) => {
         drawDynamic(context, x, y, shape, control);
     };
@@ -208,7 +213,7 @@ const canvasRectangleDrawer = function (shape, div, x, y) {
 
     self.drawLinkingFrame = context => drawLinkingFrame(shape, context);
 
-    let control = { percent: 0, times: 0 };
+    let control = { percent: 0, times: 0, pixelPos: 0, prevTime: 0 };
     self.drawDynamic = (context, x, y) => {
         drawDynamic(context, x, y, shape, control);
     };

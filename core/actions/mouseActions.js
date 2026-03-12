@@ -356,6 +356,14 @@ const bindMouseActions = page => {
             case "addShape":
                 command = addCommand(page, position.context.shapes);
                 command.execute();
+                // 新建完成后触发 contextToolbar 定位（此时 shape 已有最终尺寸和坐标）
+                // 使用 requestAnimationFrame 确保引擎完成本轮渲染后再定位，避免位置偏差
+                requestAnimationFrame(() => {
+                    page.triggerEvent({
+                        type: EVENT_TYPE.CONTEXT_CREATE,
+                        value: [page.mousedownShape],
+                    });
+                });
                 break;
             case "eraser":
                 command = eraserComamnd(page, position.context.shapes);

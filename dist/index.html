@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Anna</title>
-  <script type="module" crossorigin src="/assets/index-DTxgMNlb.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-DVSvpD_m.css">
+  <script type="module" crossorigin src="/assets/index-DEfoOttV.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-DEPGHH8A.css">
 </head>
 <body>
 
@@ -176,13 +176,21 @@
 
     <div class="toolbar-divider"></div>
 
-    <!-- 主题切换 -->
-    <button class="icon-btn" id="btn-theme" title="切换画布主题">
-      <svg viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/>
-        <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-      </svg>
-    </button>
+    <!-- 主题选择器（下拉） -->
+    <div class="theme-picker" id="theme-picker">
+      <button class="icon-btn theme-btn" id="btn-theme" title="主题">
+        <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
+          <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <span class="theme-chip" id="theme-chip" data-theme="light">浅色</span>
+        <svg class="theme-chevron" viewBox="0 0 10 6" fill="none" width="8" height="8">
+          <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <!-- 下拉选项由 whiteboard.js 动态生成 -->
+      <div class="theme-dropdown hidden" id="theme-dropdown" role="listbox" aria-label="主题"></div>
+    </div>
 
   </header>
 
@@ -615,13 +623,20 @@
                   </svg>
                   <span data-i18n="s.badge">警徽</span>
                 </button>
-                <button class="shape-item" data-tool="camera" title="摄像头">
+                <button class="shape-item" data-tool="camera" title="相机">
                   <svg viewBox="0 0 24 24" fill="none">
-                    <path d="M4 8h12l3 3v5H4V8z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                    <circle cx="11" cy="13.5" r="2.5" stroke="currentColor" stroke-width="1.6"/>
-                    <path d="M19 11l3-2v6l-3-2" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                    <!-- 机身 -->
+                    <rect x="2" y="8" width="20" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                    <!-- 顶部取景器凸包 -->
+                    <path d="M7 8V5.5h5V8" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                    <!-- 快门按钮 -->
+                    <circle cx="19.5" cy="7.5" r="1.2" fill="currentColor"/>
+                    <!-- 镜头外环 -->
+                    <circle cx="12" cy="14.5" r="3.5" stroke="currentColor" stroke-width="1.6"/>
+                    <!-- 镜头内圆 -->
+                    <circle cx="12" cy="14.5" r="1.6" fill="currentColor"/>
                   </svg>
-                  <span data-i18n="s.camera">摄像头</span>
+                  <span data-i18n="s.camera">相机</span>
                 </button>
                 <button class="shape-item" data-tool="cctv" title="监控球机">
                   <svg viewBox="0 0 24 24" fill="none">
@@ -861,9 +876,330 @@
             </div>
           </div>
 
+          <!-- 车辆 -->
+          <div class="shape-group">
+            <button class="shape-group-header">
+              <span data-i18n="grp.icon.vehicles">车辆</span>
+              <svg class="shape-group-chevron" viewBox="0 0 10 10"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="shape-group-body">
+              <div class="shape-grid">
+                <button class="shape-item" data-tool="car" title="轿车">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="9" width="18" height="9" rx="2" stroke="currentColor" stroke-width="1.6"/>
+                    <path d="M6 9l2-4h8l2 4" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                    <circle cx="7.5" cy="18" r="2" stroke="currentColor" stroke-width="1.4"/>
+                    <circle cx="16.5" cy="18" r="2" stroke="currentColor" stroke-width="1.4"/>
+                  </svg>
+                  <span data-i18n="s.car">轿车</span>
+                </button>
+                <button class="shape-item" data-tool="truck" title="卡车">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <rect x="2" y="7" width="14" height="11" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
+                    <path d="M16 10h4l2 4v4h-6V10z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                    <circle cx="6" cy="18" r="2" stroke="currentColor" stroke-width="1.4"/>
+                    <circle cx="18" cy="18" r="2" stroke="currentColor" stroke-width="1.4"/>
+                  </svg>
+                  <span data-i18n="s.truck">卡车</span>
+                </button>
+                <button class="shape-item" data-tool="bus" title="公交车">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="4" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/>
+                    <path d="M3 10h18" stroke="currentColor" stroke-width="1.4"/>
+                    <circle cx="7" cy="18" r="2" stroke="currentColor" stroke-width="1.4"/>
+                    <circle cx="17" cy="18" r="2" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M8 7h3M13 7h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.bus">公交车</span>
+                </button>
+                <button class="shape-item" data-tool="bicycle" title="自行车">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="6" cy="15" r="4" stroke="currentColor" stroke-width="1.6"/>
+                    <circle cx="18" cy="15" r="4" stroke="currentColor" stroke-width="1.6"/>
+                    <path d="M6 15l5-8h3l4 8M9 7h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span data-i18n="s.bicycle">自行车</span>
+                </button>
+                <button class="shape-item" data-tool="motorcycle" title="摩托车">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="5.5" cy="16" r="3.5" stroke="currentColor" stroke-width="1.6"/>
+                    <circle cx="18.5" cy="16" r="3.5" stroke="currentColor" stroke-width="1.6"/>
+                    <path d="M9 16h5.5l3-5h-5L9 8H6M9 8l2 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M14.5 8h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.motorcycle">摩托车</span>
+                </button>
+                <button class="shape-item" data-tool="airplane" title="飞机">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2c0 0-1 2-1 6l-8 4v2l8-2v4l-2 1v2l3-1 3 1v-2l-2-1v-4l8 2v-2l-8-4c0-4-1-6-1-6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                  </svg>
+                  <span data-i18n="s.airplane">飞机</span>
+                </button>
+                <button class="shape-item" data-tool="helicopter" title="直升机">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M2 8h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                    <ellipse cx="9" cy="14" rx="5" ry="3.5" stroke="currentColor" stroke-width="1.6"/>
+                    <path d="M14 12.5l6 2.5v1.5l-6-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M20 15.5v-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M6 17.5v3M12 17.5v3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                    <path d="M4 20.5h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.helicopter">直升机</span>
+                </button>
+                <button class="shape-item" data-tool="ship" title="轮船">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M3 17l2-5h14l2 5c0 2-1.5 3-9 3S3 19 3 17z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                    <rect x="7" y="10" width="10" height="7" rx="1" stroke="currentColor" stroke-width="1.4"/>
+                    <rect x="9" y="6" width="6" height="5" rx="1" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M12 3v3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.ship">轮船</span>
+                </button>
+                <button class="shape-item" data-tool="train" title="火车">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <rect x="5" y="3" width="14" height="15" rx="3" stroke="currentColor" stroke-width="1.6"/>
+                    <path d="M5 11h14" stroke="currentColor" stroke-width="1.4"/>
+                    <rect x="7" y="5" width="4" height="4" rx="0.5" stroke="currentColor" stroke-width="1.4"/>
+                    <rect x="13" y="5" width="4" height="4" rx="0.5" stroke="currentColor" stroke-width="1.4"/>
+                    <circle cx="8.5" cy="17.5" r="1.5" stroke="currentColor" stroke-width="1.4"/>
+                    <circle cx="15.5" cy="17.5" r="1.5" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M7 21l2-3.5M17 21l-2-3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.train">火车</span>
+                </button>
+                <button class="shape-item" data-tool="rocket" title="火箭">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2c0 0-4 4-4 10v3l4 2 4-2v-3c0-6-4-10-4-10z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                    <path d="M8 12l-3 3v3l3-1M16 12l3 3v3l-3-1" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                    <circle cx="12" cy="10" r="2" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M10 17l2 3 2-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span data-i18n="s.rocket">火箭</span>
+                </button>
+                <button class="shape-item" data-tool="submarine" title="潜水艇">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <ellipse cx="12" cy="15" rx="9" ry="4" stroke="currentColor" stroke-width="1.6"/>
+                    <rect x="9" y="8" width="6" height="7" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M12 8V5M12 5h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.submarine">潜艇</span>
+                </button>
+                <button class="shape-item" data-tool="ambulance" title="救护车">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <rect x="2" y="7" width="20" height="11" rx="2" stroke="currentColor" stroke-width="1.6"/>
+                    <path d="M2 10h20" stroke="currentColor" stroke-width="1"/>
+                    <path d="M10 13v-2M9 12h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="6.5" cy="18" r="2" stroke="currentColor" stroke-width="1.4"/>
+                    <circle cx="17.5" cy="18" r="2" stroke="currentColor" stroke-width="1.4"/>
+                    <rect x="8" y="4" width="8" height="3" rx="1" stroke="currentColor" stroke-width="1.4"/>
+                  </svg>
+                  <span data-i18n="s.ambulance">救护车</span>
+                </button>
+                <button class="shape-item" data-tool="fireEngine" title="消防车">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <rect x="2" y="9" width="20" height="9" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
+                    <path d="M2 12h8V9" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                    <path d="M4 6h18v3H4z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                    <circle cx="7" cy="18" r="2" stroke="currentColor" stroke-width="1.4"/>
+                    <circle cx="17" cy="18" r="2" stroke="currentColor" stroke-width="1.4"/>
+                  </svg>
+                  <span data-i18n="s.fireEngine">消防车</span>
+                </button>
+                <button class="shape-item" data-tool="tractor" title="拖拉机">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="15" cy="16" r="5" stroke="currentColor" stroke-width="1.6"/>
+                    <circle cx="7" cy="18" r="3" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M10 16V9h6v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    <rect x="13" y="6" width="6" height="7" rx="1" stroke="currentColor" stroke-width="1.4"/>
+                  </svg>
+                  <span data-i18n="s.tractor">拖拉机</span>
+                </button>
+                <button class="shape-item" data-tool="sailboat" title="帆船">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 3v15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                    <path d="M12 5l8 10H12z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                    <path d="M12 8l-6 9h6z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                    <path d="M5 18c0 2 3 3 7 3s7-1 7-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.sailboat">帆船</span>
+                </button>
+                <button class="shape-item" data-tool="taxi" title="出租车">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="9" width="18" height="9" rx="2" stroke="currentColor" stroke-width="1.6"/>
+                    <path d="M6 9l2-4h8l2 4" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                    <circle cx="7.5" cy="18" r="2" stroke="currentColor" stroke-width="1.4"/>
+                    <circle cx="16.5" cy="18" r="2" stroke="currentColor" stroke-width="1.4"/>
+                    <rect x="9" y="3" width="6" height="2" rx="0.5" stroke="currentColor" stroke-width="1.4"/>
+                  </svg>
+                  <span data-i18n="s.taxi">出租车</span>
+                </button>
+                <button class="shape-item" data-tool="scooter" title="电动车">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="6" cy="18" r="3" stroke="currentColor" stroke-width="1.6"/>
+                    <circle cx="18" cy="18" r="3" stroke="currentColor" stroke-width="1.6"/>
+                    <path d="M9 18h6M8 15h7c1 0 2-1 2-2V9h-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M9 9V6h4l1 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M7 9L9 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                    <path d="M6 7h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.scooter">电动车</span>
+                </button>
+                <button class="shape-item" data-tool="drone" title="无人机">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
+                    <line x1="9" y1="9" x2="4" y2="4" stroke="currentColor" stroke-width="1.4"/>
+                    <line x1="15" y1="9" x2="20" y2="4" stroke="currentColor" stroke-width="1.4"/>
+                    <line x1="9" y1="15" x2="4" y2="20" stroke="currentColor" stroke-width="1.4"/>
+                    <line x1="15" y1="15" x2="20" y2="20" stroke="currentColor" stroke-width="1.4"/>
+                    <circle cx="4" cy="4" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+                    <circle cx="20" cy="4" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+                    <circle cx="4" cy="20" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+                    <circle cx="20" cy="20" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+                  </svg>
+                  <span data-i18n="s.drone">无人机</span>
+                </button>
+                <button class="shape-item" data-tool="forklift" title="叉车">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <rect x="8" y="7" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.6"/>
+                    <path d="M8 11H4V9h4" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                    <path d="M4 10v8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                    <path d="M4 14h4M4 17h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                    <circle cx="11" cy="18" r="2" stroke="currentColor" stroke-width="1.4"/>
+                    <circle cx="18" cy="18" r="2" stroke="currentColor" stroke-width="1.4"/>
+                  </svg>
+                  <span data-i18n="s.forklift">叉车</span>
+                </button>
+                <button class="shape-item" data-tool="tank" title="坦克">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="13" width="18" height="7" rx="3" stroke="currentColor" stroke-width="1.6"/>
+                    <rect x="5" y="9" width="14" height="5" rx="1" stroke="currentColor" stroke-width="1.4"/>
+                    <ellipse cx="11" cy="9" rx="5" ry="3" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M14 8h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.tank">坦克</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 虫子 -->
+          <div class="shape-group">
+            <button class="shape-group-header">
+              <span data-i18n="grp.icon.insects">虫子</span>
+              <svg class="shape-group-chevron" viewBox="0 0 16 16" fill="none">
+                <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="shape-group-body">
+              <div class="shape-grid">
+                <button class="shape-item" data-tool="butterfly" title="蝴蝶">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 5C12 5 8 2 4 5C1 7.5 2 12 5 12L12 12L19 12C22 12 23 7.5 20 5C16 2 12 5 12 5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                    <path d="M12 12C12 12 9 14 6 19C5 21 8 22 10 20L12 12L14 20C16 22 19 21 18 19C15 14 12 12 12 12Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                    <path d="M12 4L11 2M12 4L13 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.butterfly">蝴蝶</span>
+                </button>
+                <button class="shape-item" data-tool="bee" title="蜜蜂">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <ellipse cx="15" cy="13" rx="7" ry="5" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M8 13h14M10 10h10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                    <ellipse cx="12" cy="8" rx="4" ry="3" stroke="currentColor" stroke-width="1.3" transform="rotate(-15 12 8)"/>
+                    <circle cx="5" cy="13" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+                  </svg>
+                  <span data-i18n="s.bee">蜜蜂</span>
+                </button>
+                <button class="shape-item" data-tool="ant" title="蚂蚁">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="5" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
+                    <circle cx="12" cy="12" r="2" stroke="currentColor" stroke-width="1.5"/>
+                    <ellipse cx="18" cy="13" rx="4" ry="5" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M10 10L7 7M10 12L7 12M10 14L7 17M14 10L17 7M14 12L17 12M14 14L17 17" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                    <path d="M4 9L2 6M4 9L3 7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.ant">蚂蚁</span>
+                </button>
+                <button class="shape-item" data-tool="beetle" title="甲虫">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <ellipse cx="13" cy="14" rx="7" ry="8" stroke="currentColor" stroke-width="1.5"/>
+                    <line x1="13" y1="6" x2="13" y2="22" stroke="currentColor" stroke-width="1.2"/>
+                    <path d="M6 10H2M6 14H2M6 18H2M20 10H24M20 14H24M20 18H24" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                    <ellipse cx="13" cy="7" rx="3" ry="2.5" stroke="currentColor" stroke-width="1.4"/>
+                  </svg>
+                  <span data-i18n="s.beetle">甲虫</span>
+                </button>
+                <button class="shape-item" data-tool="ladybug" title="瓢虫">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="14" r="8" stroke="currentColor" stroke-width="1.5"/>
+                    <line x1="12" y1="6" x2="12" y2="22" stroke="currentColor" stroke-width="1.4"/>
+                    <circle cx="9" cy="12" r="1.5" stroke="currentColor" stroke-width="1.2"/>
+                    <circle cx="15" cy="12" r="1.5" stroke="currentColor" stroke-width="1.2"/>
+                    <circle cx="9" cy="17" r="1.5" stroke="currentColor" stroke-width="1.2"/>
+                    <circle cx="15" cy="17" r="1.5" stroke="currentColor" stroke-width="1.2"/>
+                    <circle cx="12" cy="7" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+                  </svg>
+                  <span data-i18n="s.ladybug">瓢虫</span>
+                </button>
+                <button class="shape-item" data-tool="spider" title="蜘蛛">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="15" r="5" stroke="currentColor" stroke-width="1.5"/>
+                    <ellipse cx="12" cy="8" rx="3.5" ry="2.5" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M7 6L3 3M17 6L21 3M5 11L1 10M19 11L23 10M5 17L1 20M19 17L23 20" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.spider">蜘蛛</span>
+                </button>
+                <button class="shape-item" data-tool="dragonfly" title="蜻蜓">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <ellipse cx="12" cy="12" rx="8" ry="2" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M12 10C12 10 6 5 3 7C1 8.5 3 12 6 11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                    <path d="M12 10C12 10 18 5 21 7C23 8.5 21 12 18 11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                    <path d="M12 14C12 14 6 19 3 17C1 15.5 3 12 6 13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                    <path d="M12 14C12 14 18 19 21 17C23 15.5 21 12 18 13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                    <circle cx="5" cy="12" r="2" stroke="currentColor" stroke-width="1.5"/>
+                  </svg>
+                  <span data-i18n="s.dragonfly">蜻蜓</span>
+                </button>
+                <button class="shape-item" data-tool="mosquito" title="蚊子">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M7 10C9 9 15 9 18 12C19.5 13.5 19 17 17 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <circle cx="6" cy="10" r="2" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M4 10L1 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <ellipse cx="11" cy="7" rx="3" ry="2" stroke="currentColor" stroke-width="1.3" transform="rotate(-20 11 7)"/>
+                    <ellipse cx="15" cy="7" rx="2.5" ry="1.8" stroke="currentColor" stroke-width="1.3" transform="rotate(-15 15 7)"/>
+                    <path d="M8 14L6 19M11 15L10 20M14 15L13 19" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.mosquito">蚊子</span>
+                </button>
+                <button class="shape-item" data-tool="caterpillar" title="毛毛虫">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="3.5" cy="13" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+                    <circle cx="8" cy="12" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+                    <circle cx="12.5" cy="12" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+                    <circle cx="17" cy="12" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+                    <circle cx="21" cy="13" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+                    <circle cx="21.5" cy="10" r="1.8" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M20 8L19 6M22 8L23 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                  </svg>
+                  <span data-i18n="s.caterpillar">毛毛虫</span>
+                </button>
+                <button class="shape-item" data-tool="snail" title="蜗牛">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="15" cy="11" r="6" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M15 7C15 7 18 8 18 11C18 12.5 17 14 15 14C13 14 12 12.5 12 11" stroke="currentColor" stroke-width="1.2"/>
+                    <path d="M3 17C3 17 6 19 9 17C10 16.5 11 16 12 16L21 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M5 14L5 12M7 13L7 11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                    <circle cx="5" cy="11" r="1" fill="currentColor"/>
+                    <circle cx="7" cy="10" r="1" fill="currentColor"/>
+                  </svg>
+                  <span data-i18n="s.snail">蜗牛</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- 未来分类（占位，逐步扩展） -->
           <div class="icon-coming-grid">
-            <div class="icon-cat-badge" data-i18n="grp.icon.vehicles">车辆</div>
+            <div class="icon-cat-badge" data-i18n="grp.icon.animals">动物</div>
             <div class="icon-cat-badge" data-i18n="grp.icon.animals">动物</div>
             <div class="icon-cat-badge" data-i18n="grp.icon.devices">技术与电子</div>
             <div class="icon-cat-badge" data-i18n="grp.icon.food">食品和饮料</div>
@@ -896,89 +1232,9 @@
     </div>
 
     <!-- 右侧属性面板（选中形状时显示） -->
+    <!-- 属性面板内容由 propertiesPanel.js 根据 shape.getDisplayFields() 动态生成 -->
     <aside id="properties-panel" class="hidden">
       <h3>属性</h3>
-
-      <!-- 位置与尺寸 -->
-      <div class="prop-section">
-        <div class="prop-section-hd">位置与尺寸</div>
-        <div class="prop-row2">
-          <div class="prop-field">
-            <label>X</label>
-            <input type="number" id="prop-x" class="prop-num" step="1" />
-          </div>
-          <div class="prop-field">
-            <label>Y</label>
-            <input type="number" id="prop-y" class="prop-num" step="1" />
-          </div>
-        </div>
-        <div class="prop-row2">
-          <div class="prop-field">
-            <label>宽</label>
-            <input type="number" id="prop-w" class="prop-num" min="1" step="1" />
-          </div>
-          <div class="prop-field">
-            <label>高</label>
-            <input type="number" id="prop-h" class="prop-num" min="1" step="1" />
-          </div>
-        </div>
-      </div>
-
-      <!-- 外观 -->
-      <div class="prop-section">
-        <div class="prop-section-hd">外观</div>
-        <div class="prop-group">
-          <label>填充色 / 透明度</label>
-          <div class="color-picker-row">
-            <input type="color" id="prop-fill" value="#ffffff" />
-            <input type="range" id="prop-alpha" min="0" max="100" value="100" />
-            <span class="prop-val" id="alpha-val">100%</span>
-          </div>
-        </div>
-        <div class="prop-group">
-          <label>边框色 / 宽度</label>
-          <div class="color-picker-row">
-            <input type="color" id="prop-border" value="#a8b2c4" />
-            <input type="range" id="prop-border-w" min="0" max="10" value="1.5" step="0.5" />
-            <span class="prop-val" id="borderw-val">1.5</span>
-          </div>
-        </div>
-        <div class="prop-group">
-          <label>圆角</label>
-          <div class="color-picker-row">
-            <input type="range" id="prop-radius" min="0" max="60" value="4" step="1" />
-            <span class="prop-val" id="radius-val">4</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 文字 -->
-      <div class="prop-section">
-        <div class="prop-section-hd">文字</div>
-        <div class="prop-group">
-          <label>颜色 / 大小</label>
-          <div class="color-picker-row">
-            <input type="color" id="prop-font-color" value="#333333" />
-            <input type="number" id="prop-font-size" class="prop-num-sm" min="6" max="120" value="12" />
-            <span class="prop-val">px</span>
-          </div>
-        </div>
-        <div class="prop-group">
-          <label>水平对齐</label>
-          <div class="prop-align-row">
-            <button class="prop-align-btn active" id="align-left" title="左对齐">
-              <svg viewBox="0 0 16 16" width="14" height="14"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
-            </button>
-            <button class="prop-align-btn" id="align-center" title="居中">
-              <svg viewBox="0 0 16 16" width="14" height="14"><path d="M2 4h12M4 8h8M3 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
-            </button>
-            <button class="prop-align-btn" id="align-right" title="右对齐">
-              <svg viewBox="0 0 16 16" width="14" height="14"><path d="M2 4h12M6 8h8M4 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
     </aside>
 
   </main>

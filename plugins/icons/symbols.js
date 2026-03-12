@@ -28,7 +28,7 @@ function arrowHead(ctx, tx, ty, angle, size) {
 // ── 男标志 (♂) ───────────────────────────────────────────────────────────────
 // 圆圈（左下）+ 斜向右上箭头 + 两条小挡针构成箭头端
 const symbolMaleDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) => {
-    const r   = Math.min(W, H) * 0.30;
+    const r   = Math.min(W, H) * 0.25;
     const cx  = px + W * 0.38;
     const cy  = py + H * 0.62;
 
@@ -49,13 +49,13 @@ const symbolMaleDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw
 
     // arrowHead 用 fill，需显式用描边色填充，否则 backColor 可能透明/白色导致箭头不可见
     context.fillStyle = stroke;
-    arrowHead(context, tipX, tipY, ang, Math.max(bw * 2.5, W * 0.06));
+    arrowHead(context, tipX, tipY, ang, Math.max(bw * 2.5, W * 0.1));
 });
 
 // ── 女标志 (♀) ───────────────────────────────────────────────────────────────
 // 圆圈（上）+ 垂直向下竖线 + 水平横线（十字）
 const symbolFemaleDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) => {
-    const r    = Math.min(W, H) * 0.30;
+    const r    = Math.min(W, H) * 0.25;
     const cx   = px + W * 0.50;
     const cy   = py + H * 0.36;
     const botY = py + H * 0.94;
@@ -88,11 +88,12 @@ const dropletDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) =
     context.beginPath();
     context.moveTo(cx, tipY);
     // 右侧贝塞尔：从尖顶弯曲到半圆右端
-    context.bezierCurveTo(cx + W * 0.40, py + H * 0.26, cx + r, midY - H * 0.10, cx + r, midY);
+    context.bezierCurveTo(cx + W * 0.27, py + H * 0.26, cx + r, midY - H * 0.1, cx + r, midY);
+
     // 底部半圆：从右 (0) 顺时针到左 (π)，经过最底点
     context.arc(cx, midY, r, 0, Math.PI, false);
     // 左侧贝塞尔：从半圆左端回到尖顶
-    context.bezierCurveTo(cx - r, midY - H * 0.10, cx - W * 0.40, py + H * 0.26, cx, tipY);
+    context.bezierCurveTo(cx - r, midY - H * 0.1, cx - W * 0.27, py + H * 0.26, cx, tipY);
     context.closePath();
     context.fill();
     context.stroke();
@@ -102,154 +103,90 @@ const dropletDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) =
 // 两段贝塞尔曲线拼接成经典心形
 const heartDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) => {
     const cx  = px + W * 0.50;
-    const tip = py + H * 0.88;  // 底部尖点
-    const mid = py + H * 0.38;  // 两乳凸之间凹陷处
+    const tip = py + H * 0.95;  // 底部尖点
+    const mid = py + H * 0.3;  // 两乳凸之间凹陷处
 
     context.beginPath();
     context.moveTo(cx, mid);
     // 右半侧
     context.bezierCurveTo(
-        cx + W * 0.04, py + H * 0.22,
-        cx + W * 0.46, py + H * 0.12,
+        cx + W * 0.04, py + H * 0.17,
+        cx + W * 0.46, py + H * 0.07,
         cx + W * 0.46, py + H * 0.38
     );
     context.bezierCurveTo(cx + W * 0.46, py + H * 0.60, cx + W * 0.18, py + H * 0.74, cx, tip);
     // 左半侧（镜像）
     context.bezierCurveTo(cx - W * 0.18, py + H * 0.74, cx - W * 0.46, py + H * 0.60, cx - W * 0.46, py + H * 0.38);
-    context.bezierCurveTo(cx - W * 0.46, py + H * 0.12, cx - W * 0.04, py + H * 0.22, cx, mid);
+    context.bezierCurveTo(cx - W * 0.46, py + H * 0.07, cx - W * 0.04, py + H * 0.17, cx, mid);
     context.closePath();
     context.fill();
     context.stroke();
 });
 
-// ── 赞 (thumbsUp) ────────────────────────────────────────────────────────────
-// 拇指（左侧竖直胶囊，高而窄）+ 四指块（右侧横向矩形，接在拇指中部）+ 掌心（底部）
-const thumbsUpDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) => {
-    // 拇指（左侧，竖直胶囊）
-    const tX = px + W * 0.08;
-    const tY = py + H * 0.05;
-    const tW = W * 0.26;
-    const tH = H * 0.60;
-    context.beginPath();
-    context.roundRect(tX, tY, tW, tH, tW * 0.48);
-    context.fill();
-    context.stroke();
+// ── 赞 / 踩 共用 SVG 轮廓路径（RemixIcon thumb-up-fill，24×24 viewBox）────────
+// 由两段子路径组成：左侧腕部竖条 + 主手掌轮廓（拇指朝上）
+const _THUMB_PATH =
+    'M2 9H5V21H2C1.44772 21 1 20.5523 1 20V10C1 9.44772 1.44772 9 2 9Z' +
+    'M7.29289 7.70711L13.6934 1.30664C13.8693 1.13072 14.1479 1.11093 14.3469 1.26017' +
+    'L15.1995 1.8996C15.6842 2.26312 15.9026 2.88254 15.7531 3.46966L14.5998 8' +
+    'H21C22.1046 8 23 8.89543 23 10V12.1043C23 12.3656 22.9488 12.6243 22.8494 12.8658' +
+    'L19.755 20.3807C19.6007 20.7554 19.2355 21 18.8303 21' +
+    'H8C7.44772 21 7 20.5523 7 20V8.41421C7 8.149 7.10536 7.89464 7.29289 7.70711Z';
 
-    // 四指块（拇指右侧，在拇指约 1/3 高度处横向延伸）
-    const fX = tX + tW * 0.72;
-    const fY = tY + tH * 0.32;
-    const fW = px + W * 0.94 - fX;
-    const fH = tH * 0.40;
-    context.beginPath();
-    context.roundRect(fX, fY, fW, fH, fH * 0.26);
-    context.fill();
-    context.stroke();
-
-    // 三条指节分隔线（淡）
-    context.globalAlpha = 0.30;
-    for (let i = 1; i < 4; i++) {
-        context.beginPath();
-        context.moveTo(fX + fW * i / 4, fY + fH * 0.18);
-        context.lineTo(fX + fW * i / 4, fY + fH * 0.82);
-        context.stroke();
+/** 将 24×24 SVG 路径缩放并绘制到 (px,py, W, H) 区域 */
+function _drawThumbPath(context, px, py, W, H, bw, flipY) {
+    const sx = W / 24;
+    const sy = H / 24;
+    context.save();
+    if (flipY) {
+        // 垂直镜像：y轴翻转，拇指朝下
+        context.translate(px, py + H);
+        context.scale(sx, -sy);
+    } else {
+        context.translate(px, py);
+        context.scale(sx, sy);
     }
-    context.globalAlpha = 1;
+    // 补偿缩放后线宽，使描边在屏幕上保持 bw 像素
+    context.lineWidth = bw / Math.min(sx, sy);
+    const p = new Path2D(_THUMB_PATH);
+    context.fill(p);
+    context.stroke(p);
+    context.restore();
+}
 
-    // 掌心（四指块下方，宽度相同）
-    const pY = fY + fH * 0.72;
-    const pH = py + H * 0.94 - pY;
-    context.beginPath();
-    context.roundRect(fX, pY, fW, pH, pH * 0.22);
-    context.fill();
-    context.stroke();
+// ── 赞 (thumbsUp) ────────────────────────────────────────────────────────────
+const thumbsUpDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) => {
+    _drawThumbPath(context, px, py, W, H, bw, false);
 });
 
 // ── 踩 (thumbsDown) ──────────────────────────────────────────────────────────
-// thumbsUp 以中心垂直翻转
 const thumbsDownDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) => {
-    context.save();
-    context.translate(px + W * 0.5, py + H * 0.5);
-    context.scale(1, -1);
-    context.translate(-(px + W * 0.5), -(py + H * 0.5));
-
-    const tX = px + W * 0.08;
-    const tY = py + H * 0.05;
-    const tW = W * 0.26;
-    const tH = H * 0.60;
-    context.beginPath();
-    context.roundRect(tX, tY, tW, tH, tW * 0.48);
-    context.fill();
-    context.stroke();
-
-    const fX = tX + tW * 0.72;
-    const fY = tY + tH * 0.32;
-    const fW = px + W * 0.94 - fX;
-    const fH = tH * 0.40;
-    context.beginPath();
-    context.roundRect(fX, fY, fW, fH, fH * 0.26);
-    context.fill();
-    context.stroke();
-
-    context.globalAlpha = 0.30;
-    for (let i = 1; i < 4; i++) {
-        context.beginPath();
-        context.moveTo(fX + fW * i / 4, fY + fH * 0.18);
-        context.lineTo(fX + fW * i / 4, fY + fH * 0.82);
-        context.stroke();
-    }
-    context.globalAlpha = 1;
-
-    const pY = fY + fH * 0.72;
-    const pH = py + H * 0.94 - pY;
-    context.beginPath();
-    context.roundRect(fX, pY, fW, pH, pH * 0.22);
-    context.fill();
-    context.stroke();
-
-    context.restore();
+    _drawThumbPath(context, px, py, W, H, bw, true);
 });
 
 // ── 手指指向 (cursorPointer) ──────────────────────────────────────────────────
-// 食指（左，高而细，独立伸直）+ 三根收拢手指（右侧矮块）+ 掌心（底部）
-// 清晰还原"指针手势"：一根指起，其余收拢
+// Bootstrap Icons hand-index-thumb-fill（16×16 viewBox）
+// 食指朝上伸直 + 拇指张开 + 其余三指收拢，整体轮廓为单一闭合路径
+const _CURSOR_PATH =
+    'M8.5 1.75v2.716' +
+    'l.047-.002c.312-.012.742-.016 1.051.046.28.056.543.18.738.288.273.152.456.385.56.642' +
+    'l.132-.012c.312-.024.794-.038 1.158.108.37.148.689.487.88.716' +
+    'q.113.137.195.248h.582a2 2 0 0 1 1.99 2.199l-.272 2.715' +
+    'a3.5 3.5 0 0 1-.444 1.389l-1.395 2.441A1.5 1.5 0 0 1 12.42 16H6.118' +
+    'a1.5 1.5 0 0 1-1.342-.83l-1.215-2.43L1.07 8.589a1.517 1.517 0 0 1 2.373-1.852' +
+    'L5 8.293V1.75a1.75 1.75 0 0 1 3.5 0';
+
 const cursorPointerDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) => {
-    // 食指（最高，左侧胶囊，独立延伸）
-    const ixW = W * 0.24;
-    const ixH = H * 0.64;
-    const ixX = px + W * 0.12;
-    const ixY = py + H * 0.04;
-    context.beginPath();
-    context.roundRect(ixX, ixY, ixW, ixH, ixW * 0.48);
-    context.fill();
-    context.stroke();
-
-    // 三根收拢手指（右侧矮横块，连接在食指中下部）
-    const fX = ixX + ixW * 0.74;
-    const fY = ixY + ixH * 0.40;
-    const fW = px + W * 0.92 - fX;
-    const fH = ixH * 0.36;
-    context.beginPath();
-    context.roundRect(fX, fY, fW, fH, fH * 0.28);
-    context.fill();
-    context.stroke();
-
-    // 两条指节分隔线（淡）
-    context.globalAlpha = 0.28;
-    for (let i = 1; i < 3; i++) {
-        context.beginPath();
-        context.moveTo(fX + fW * i / 3, fY + fH * 0.20);
-        context.lineTo(fX + fW * i / 3, fY + fH * 0.80);
-        context.stroke();
-    }
-    context.globalAlpha = 1;
-
-    // 掌心（收拢手指下方，宽度对齐）
-    const pY = fY + fH * 0.70;
-    const pH = py + H * 0.96 - pY;
-    context.beginPath();
-    context.roundRect(fX, pY, fW, pH, pH * 0.22);
-    context.fill();
-    context.stroke();
+    const sx = W / 16;
+    const sy = H / 16;
+    context.save();
+    context.translate(px, py);
+    context.scale(sx, sy);
+    context.lineWidth = bw / Math.min(sx, sy);
+    const p = new Path2D(_CURSOR_PATH);
+    context.fill(p);
+    context.stroke(p);
+    context.restore();
 });
 
 // ── Information (info) ────────────────────────────────────────────────────────

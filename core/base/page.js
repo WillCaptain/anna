@@ -2699,6 +2699,17 @@ const setKeyActions = (pageVal) => {
       return false;
     }
 
+    // Cmd+E: 切换 line 的流光效果（allowShine）
+    if (pageVal.ctrlKeyPressed && (e.code === 'KeyE')) {
+      const lines = focused.filter(s => s.allowSwitchLineMode !== undefined);
+      if (lines.length > 0) {
+        pageVal.graph.change(() => {
+          lines.forEach(s => { s.allowShine = !s.allowShine; });
+        });
+        return false;
+      }
+    }
+
     if (pageVal.focusMenuItem && pageVal.focusMenuItem.container !== '') {
       switch (e.code) {
         case 'ArrowLeft':

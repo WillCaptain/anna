@@ -147,38 +147,65 @@ const svgLineDrawer = (shape, div, x, y) => {
         self.draw();
     };
 
-    const drawShiningSpot = (context, centerX, centerY, prevX, prevY) => {
-        const r = shape.lineWidth + 1;
-        context.beginPath();
-        context.arc(centerX + 1, centerY + 1, r, 0, 2 * Math.PI);
-        context.fillStyle = shape.backColor;
-        context.fill();
-        context.closePath();
-        return {x: centerX, y: centerY};
-    };
-
-    let progress = 0;
-    let prePoint = {x: 0, y: 0};
-    let step = 0.5;
+    let pixelPos = 0;   // 当前在路径上的位置（像素）
+    let prevTime = 0;
     self.drawDynamic = function (context, x, y) {
-        if (self.svgLine === undefined || self.svgLine === null) {
-            return;
-        }
-        const path = self.svgLine.path;
-        const len = path.getTotalLength();
-        if (step >= 0) {
-            let point = path.getPointAtLength(progress);
-            prePoint = drawShiningSpot(context,
-                point.x + x - shape.width / 2 - shape.margin,
-                point.y + y - shape.height / 2 - shape.margin,
-                prePoint.x,
-                prePoint.y
-            );
-        }
-        progress += step;
-        if (progress > len) {
-            progress = -5 * step;
-        }
+        if (!shape.allowShine) return;
+        if (!self.svgLine?.path) return;
+
+        const path     = self.svgLine.path;
+        const totalLen = path.getTotalLength();
+        if (totalLen <= 0) return;
+
+        const now = performance.now();
+        const dt  = prevTime > 0 ? Math.min(now - prevTime, 100) : 0;
+        prevTime  = now;
+
+        // 恒定像素速度：150 px/s，与线长无关
+        const SPEED    = 150;          // px/s
+        const PAUSE_PX = 60;           // 末尾静默段（像素），形成间隔感
+        pixelPos += (dt / 1000) * SPEED;
+        if (pixelPos > totalLen + PAUSE_PX) pixelPos = 0;
+        if (pixelPos > totalLen) return;   // 静默段，不绘制
+
+        const svgPt = path.getPointAtLength(pixelPos);
+
+        // 将 SVG 路径局部坐标转换为以形状中心为原点的画布坐标
+        const cx = svgPt.x - shape.width  / 2;
+        const cy = svgPt.y - shape.height / 2;
+
+        const lw    = Math.max(shape.lineWidth || shape.borderWidth || 1.5, 1);
+        const r     = lw * 0.5 + 1;
+        const color = shape.getBorderColor?.() ?? '#7c6ff7';
+
+        context.save();
+
+        // 彩色晕：直接用原始 CSS 颜色字符串 + globalAlpha，无需解析格式
+        context.globalAlpha = 0.45;
+        context.beginPath();
+        context.arc(cx, cy, r * 3.5, 0, Math.PI * 2);
+        context.fillStyle = color;
+        context.fill();
+
+        // 白色径向辉光（无需颜色解析）
+        context.globalAlpha = 1;
+        const grd = context.createRadialGradient(cx, cy, 0, cx, cy, r * 4);
+        grd.addColorStop(0,    'rgba(255,255,255,0.88)');
+        grd.addColorStop(0.30, 'rgba(255,255,255,0.40)');
+        grd.addColorStop(0.65, 'rgba(255,255,255,0.10)');
+        grd.addColorStop(1,    'rgba(255,255,255,0)');
+        context.beginPath();
+        context.arc(cx, cy, r * 4, 0, Math.PI * 2);
+        context.fillStyle = grd;
+        context.fill();
+
+        // 亮白芯
+        context.beginPath();
+        context.arc(cx, cy, r * 0.7, 0, Math.PI * 2);
+        context.fillStyle = 'rgba(255,255,255,0.98)';
+        context.fill();
+
+        context.restore();
     };
 
     return self;

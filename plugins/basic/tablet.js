@@ -13,6 +13,7 @@ const canvasTabletDrawer = (shape, div, x, y) => {
     self.drawStatic = (context, px, py) => {
         const W  = shape.width  - 2;
         const H  = shape.height - 2;
+        if (W < 4 || H < 4) return;
         const bw = shape.borderWidth || 1.5;
         const r  = H * 0.1;           // body corner radius (portrait)
         const fill   = shape.getBackColor();

@@ -7,6 +7,7 @@
 
 import {rectangle} from "@anna/core/shapes/rectangle.js";
 import {canvasGeometryDrawer} from "@anna/core/drawers/canvasGeometryDrawer.js";
+import {iconTheme, resolveIconColors} from './iconTheme.js';
 
 /**
  * 创建一个图标 drawer 工厂函数。
@@ -31,9 +32,15 @@ export const makeIconDrawer = (drawFn) => (shape, div, x, y) => {
     self.drawStatic = (context, px, py) => {
         const W      = shape.width  - 2;
         const H      = shape.height - 2;
+        // 形状刚被拖拽创建时尺寸可能极小（甚至为负），直接跳过避免 arc 负半径报错
+        if (W <= 0 || H <= 0) return;
+
         const bw     = shape.borderWidth || 1.5;
-        const fill   = shape.getBackColor();
-        const stroke = shape.getBorderColor();
+        const rawFill   = shape.getBackColor();
+        const rawStroke = shape.getBorderColor();
+
+        // 彩色 / 拟物主题：解析最终使用的颜色
+        const { fill, stroke } = resolveIconColors(shape.type, rawFill, rawStroke);
 
         context.save();
         context.lineWidth   = bw;
@@ -43,6 +50,20 @@ export const makeIconDrawer = (drawFn) => (shape, div, x, y) => {
         context.fillStyle   = fill;
 
         drawFn(context, px, py, W, H, fill, stroke, bw);
+
+        // 拟物主题：在已绘制像素上叠加"顶部高光 → 底部阴影"线性渐变
+        // source-atop：仅在目标已有不透明像素处混合，透明镂空区域不受影响
+        if (iconTheme.mode === 'skeuomorphic') {
+            const grad = context.createLinearGradient(px, py, px, py + H);
+            grad.addColorStop(0,    'rgba(255,255,255,0.38)');
+            grad.addColorStop(0.36, 'rgba(255,255,255,0.10)');
+            grad.addColorStop(0.62, 'rgba(0,0,0,0.00)');
+            grad.addColorStop(1,    'rgba(0,0,0,0.24)');
+            context.globalCompositeOperation = 'source-atop';
+            context.fillStyle = grad;
+            context.fillRect(px, py, W, H);
+            context.globalCompositeOperation = 'source-over';
+        }
 
         context.restore();
     };

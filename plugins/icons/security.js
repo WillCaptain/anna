@@ -11,62 +11,68 @@
 import {makeIconDrawer, makeIcon} from './_iconBase.js';
 
 // ── 钥匙 (key) ─────────────────────────────────────────────────────────────────
-// 水平朝右：圆形头部（含镂空孔）+ 横向轴杆 + 底部两颗齿
+// 水平朝右：大环形头部 + 细轴杆 + 3颗高低不同的齿
 const keyDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) => {
-    const cy     = py + H / 2;
-    const headR  = Math.min(W, H) * 0.27;
-    const headCx = px + headR + W * 0.05;
-    const holeR  = headR * 0.38;
+    const cy     = py + H * 0.46;
+    const headR  = Math.min(W, H) * 0.30;
+    const headCx = px + headR + W * 0.03;
+    const holeR  = headR * 0.55;   // 大洞，真正的"钥匙环"外观
 
-    const shaftY1 = cy - headR * 0.30;
-    const shaftY2 = cy + headR * 0.30;
-    const shaftH  = shaftY2 - shaftY1;
-    const shaftX1 = headCx + headR * 0.80;
-    const shaftX2 = px + W  - W * 0.04;
+    const shaftH  = headR * 0.52;  // 轴杆高度
+    const shaftY1 = cy - shaftH / 2;
+    const shaftY2 = cy + shaftH / 2;
+    const shaftX1 = headCx + headR * 0.82;
+    const shaftX2 = px + W - W * 0.03;
+    const shaftW  = shaftX2 - shaftX1;
 
-    const t1X = shaftX1 + (shaftX2 - shaftX1) * 0.36;
-    const t2X = shaftX1 + (shaftX2 - shaftX1) * 0.62;
-    const tw  = shaftH * 0.9;
-    const th1 = shaftH * 0.9;
-    const th2 = shaftH * 0.65;
+    const tw      = shaftH * 0.88;
+    // 三颗不同高度的齿（高、短、中）
+    const teeth = [
+        { x: shaftX1 + shaftW * 0.22, h: H * 0.20 },
+        { x: shaftX1 + shaftW * 0.50, h: H * 0.12 },
+        { x: shaftX1 + shaftW * 0.76, h: H * 0.16 },
+    ];
 
-    // ① 头部填充
+    // ── 头部填充 ──
     context.beginPath();
     context.arc(headCx, cy, headR, 0, Math.PI * 2);
     context.fill();
 
-    // ② 镂空圆孔（destination-out 打透）
+    // ── 中心大镂空 ──
     context.globalCompositeOperation = 'destination-out';
     context.beginPath();
     context.arc(headCx, cy, holeR, 0, Math.PI * 2);
     context.fill();
     context.globalCompositeOperation = 'source-over';
 
-    // ③ 轴杆填充
+    // ── 轴杆 ──
     context.beginPath();
-    context.rect(shaftX1, shaftY1, shaftX2 - shaftX1, shaftH);
+    context.rect(shaftX1, shaftY1, shaftW, shaftH);
     context.fill();
 
-    // ④ 两颗齿
-    context.beginPath();
-    context.rect(t1X - tw / 2, shaftY2, tw, th1);
-    context.fill();
-    context.beginPath();
-    context.rect(t2X - tw / 2, shaftY2, tw * 0.75, th2);
-    context.fill();
+    // ── 齿（各自高低不同）──
+    for (const { x, h } of teeth) {
+        context.beginPath();
+        context.rect(x - tw / 2, shaftY2, tw, h);
+        context.fill();
+    }
 
-    // ⑤ 所有轮廓描边
+    // ── 描边（按绘制顺序覆盖）──
     context.beginPath();
     context.arc(headCx, cy, headR, 0, Math.PI * 2);
     context.stroke();
-
     context.beginPath();
     context.arc(headCx, cy, holeR, 0, Math.PI * 2);
     context.stroke();
 
-    context.strokeRect(shaftX1, shaftY1, shaftX2 - shaftX1, shaftH);
-    context.strokeRect(t1X - tw / 2, shaftY2, tw, th1);
-    context.strokeRect(t2X - tw / 2, shaftY2, tw * 0.75, th2);
+    context.beginPath();
+    context.rect(shaftX1, shaftY1, shaftW, shaftH);
+    context.stroke();
+    for (const { x, h } of teeth) {
+        context.beginPath();
+        context.rect(x - tw / 2, shaftY2, tw, h);
+        context.stroke();
+    }
 });
 
 // ── 锁（关）(padlock) ──────────────────────────────────────────────────────────
@@ -366,45 +372,63 @@ const scalesDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) =>
 // 两个腕环（圆形，位于上方）+ 竖向短连杆 + 横向链节（在下方），
 // 将腕环与链节分离，避免与眼镜轮廓混淆
 const handcuffsDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, bw) => {
-    const ringCy  = py + H * 0.36;                  // 腕环圆心（偏上）
-    const r       = Math.min(W, H) * 0.18;
-    const lCx     = px + W * 0.26;
-    const rCx     = px + W * 0.74;
-    const chainY  = py + H * 0.74;                  // 链节中心（偏下）
-    const prevLw  = context.lineWidth;
-    context.lineWidth = Math.max(bw * 1.6, W * 0.048);
+    const cy     = py + H * 0.50;
+    const cR     = Math.min(W, H) * 0.24;   // 手铐外环半径
+    const innerR = cR * 0.58;               // 内环半径（留出足够宽度的环）
+    const lCx    = px + W * 0.22;
+    const rCx    = px + W * 0.78;
 
-    // 左腕环
-    context.beginPath();
-    context.arc(lCx, ringCy, r, 0, Math.PI * 2);
-    context.stroke();
-
-    // 右腕环
-    context.beginPath();
-    context.arc(rCx, ringCy, r, 0, Math.PI * 2);
-    context.stroke();
-
-    context.lineWidth = prevLw;
-
-    // 左腕环底部到链节的竖向连接线
-    context.beginPath();
-    context.moveTo(lCx, ringCy + r);
-    context.lineTo(lCx, chainY);
-    context.stroke();
-
-    // 右腕环底部到链节的竖向连接线
-    context.beginPath();
-    context.moveTo(rCx, ringCy + r);
-    context.lineTo(rCx, chainY);
-    context.stroke();
-
-    // 三节横向链环（水平椭圆，均匀分布于两连接线之间）
-    const linkRx = W * 0.055, linkRy = H * 0.038;
-    const linkGap = (rCx - lCx) / 2;
-    for (let i = 0; i < 3; i++) {
-        const lx = lCx + linkGap * i / 2 + linkGap * 0.25;
+    // ── 链条 3 节（先画，在手铐圆环之下）──
+    const cLeft  = lCx + cR * 0.88;
+    const cRight = rCx - cR * 0.88;
+    const span   = cRight - cLeft;
+    const lRx    = span / 5.2;
+    const lRy    = H * 0.090;
+    const linkXs = [
+        cLeft  + lRx * 0.9,
+        (cLeft + cRight) / 2,
+        cRight - lRx * 0.9,
+    ];
+    for (const lx of linkXs) {
         context.beginPath();
-        context.ellipse(lx + linkGap * 0.25 * i, chainY, linkRx, linkRy, 0, 0, Math.PI * 2);
+        context.ellipse(lx, cy, lRx, lRy, 0, 0, Math.PI * 2);
+        context.fill();
+        context.stroke();
+    }
+
+    // ── 两只手铐圆环（填充+镂空）──
+    for (const cx of [lCx, rCx]) {
+        // 外环填充
+        context.beginPath();
+        context.arc(cx, cy, cR, 0, Math.PI * 2);
+        context.fill();
+        context.stroke();
+
+        // 内镂空
+        context.globalCompositeOperation = 'destination-out';
+        context.beginPath();
+        context.arc(cx, cy, innerR, 0, Math.PI * 2);
+        context.fill();
+        context.globalCompositeOperation = 'source-over';
+
+        // 内环描边
+        context.beginPath();
+        context.arc(cx, cy, innerR, 0, Math.PI * 2);
+        context.stroke();
+    }
+
+    // ── 锁孔（外侧小圆，表示锁扣位置）──
+    const khR = cR * 0.13;
+    const offX = cR * 0.68;
+    for (const [cx, dir] of [[lCx, -1], [rCx, 1]]) {
+        context.save();
+        context.globalAlpha = 0.55;
+        context.beginPath();
+        context.arc(cx + dir * offX, cy, khR, 0, Math.PI * 2);
+        context.fill();
+        context.restore();
+        context.beginPath();
+        context.arc(cx + dir * offX, cy, khR, 0, Math.PI * 2);
         context.stroke();
     }
 });
@@ -685,10 +709,14 @@ const streetLightDrawer = makeIconDrawer((context, px, py, W, H, fill, stroke, b
     context.lineWidth = bw;
 
     // 灯罩（臂末端的矩形灯具）
-    const lampW = W * 0.28;
-    const lampH = H * 0.13;
+    const lampW = W * 0.25;
+    const lampH = H * 0.1;
     const lampX = armEndX - lampW / 2;
-    const lampY = poleTopY;
+    const lampY = poleTopY + H * 0.03;
+    context.beginPath();
+    context.moveTo(armEndX,poleTopY);
+    context.lineTo(armEndX,lampY);
+    context.stroke();
     context.beginPath();
     context.roundRect(lampX, lampY, lampW, lampH, lampH * 0.30);
     context.fill();

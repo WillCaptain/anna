@@ -32,7 +32,7 @@ all.page.delete = ['readOnly', 'width', 'height', 'x', 'y'];
 all.line = ['fromShape', 'toShape', 'definedFromConnector', 'definedToConnector', 'endpointOffsetX', 'endpointOffsetY',
   'lineMode', 'curvePoint1', 'curvePoint2', 'beginArrow', 'beginArrowEmpty', 'endArrow', 'endArrowEmpty', 'beginArrowSize',
   'endArrowSize', 'lineWidth', 'borderColor', 'textX', 'textY', 'brokenPoints', 'arrowBeginPoint', 'arrowEndPoint',
-  'allowSwitchLineMode'];
+  'allowSwitchLineMode', 'allowShine'];
 
 all.ellipse = ['lineWidth'];
 

@@ -11,38 +11,74 @@ import {graph} from '@anna/core/base/graph.js';
 import {EVENT_TYPE} from '@anna/common/const.js';
 import {t} from './i18n.js';
 import {initPropertiesPanel, syncPanelFromShapes} from './propertiesPanel.js';
+import {iconTheme} from '@anna/plugins/icons/iconTheme.js';
 
 // ─── 主题配色方案 ─────────────────────────────────────────────────────────────
 const CANVAS_THEMES = [
     {
-        id:    'light',
-        label: '浅色画布',
+        id:               'light',
+        label:            '浅色',
+        iconMode:         'flat',
         canvasBg:         '#c8c5c0',
+        wrapperBg:        '#a8a5a0',
+        wrapperDot:       'rgba(0,0,0,0.14)',
         shapeBackColor:   '#ffffff',
         shapeBorderColor: '#a8b2c4',
+        shapeFontColor:   '#1a1d2e',
     },
     {
-        id:    'dark',
-        label: '深色画布',
-        canvasBg:         '#2a2d3a',
-        shapeBackColor:   '#3a3d4a',
-        shapeBorderColor: '#5a5f78',
+        id:               'dark',
+        label:            '深色',
+        iconMode:         'flat',
+        canvasBg:         '#1e2030',
+        wrapperBg:        '#111420',
+        wrapperDot:       'rgba(255,255,255,0.06)',
+        shapeBackColor:   '#2e3350',
+        shapeBorderColor: '#8892c0',
+        shapeFontColor:   '#d8ddf0',
     },
     {
-        id:    'warm',
-        label: '暖白画布',
+        id:               'warm',
+        label:            '暖白',
+        iconMode:         'flat',
         canvasBg:         '#f0ece6',
+        wrapperBg:        '#d8d0c4',
+        wrapperDot:       'rgba(80,60,40,0.12)',
         shapeBackColor:   '#ffffff',
         shapeBorderColor: '#b8a898',
+        shapeFontColor:   '#2a1e0e',
+    },
+    {
+        id:               'colorful',
+        label:            '彩色',
+        iconMode:         'colorful',
+        canvasBg:         '#e4ecf8',
+        wrapperBg:        '#c8d4e8',
+        wrapperDot:       'rgba(60,100,200,0.10)',
+        shapeBackColor:   '#dbeafe',
+        shapeBorderColor: '#3b82f6',
+        shapeFontColor:   '#1e2a5a',
+    },
+    {
+        id:               'skeuomorphic',
+        label:            '拟物',
+        iconMode:         'skeuomorphic',
+        canvasBg:         '#b8a990',
+        wrapperBg:        '#9a8870',
+        wrapperDot:       'rgba(50,30,10,0.12)',
+        shapeBackColor:   '#f0e8d8',
+        shapeBorderColor: '#7c6a52',
+        shapeFontColor:   '#3a2a14',
     },
 ];
 
-let currentThemeIndex = 0;
+let currentThemeIndex = 1;
 
 const THEME = {
     get canvasBg()         { return CANVAS_THEMES[currentThemeIndex].canvasBg; },
     get shapeBackColor()   { return CANVAS_THEMES[currentThemeIndex].shapeBackColor; },
     get shapeBorderColor() { return CANVAS_THEMES[currentThemeIndex].shapeBorderColor; },
+    get shapeFontColor()   { return CANVAS_THEMES[currentThemeIndex].shapeFontColor; },
     shapeBorderWidth: 1.5,
     penColor:         '#7a8499',
     penWidth:         2,
@@ -75,6 +111,8 @@ import * as chevronMod           from '@anna/plugins/basic/chevron.js';
 // icon library
 import * as securityMod          from '@anna/plugins/icons/security.js';
 import * as symbolsMod           from '@anna/plugins/icons/symbols.js';
+import * as vehiclesMod          from '@anna/plugins/icons/vehicles.js';
+import * as insectsMod           from '@anna/plugins/icons/insects.js';
 // plugin shapes — icons
 import * as checkmarkMod         from '@anna/plugins/basic/checkmark.js';
 import * as xmarkMod             from '@anna/plugins/basic/xmark.js';
@@ -84,6 +122,21 @@ import * as monitorMod           from '@anna/plugins/basic/monitor.js';
 import * as tabletMod            from '@anna/plugins/basic/tablet.js';
 import * as documentMod          from '@anna/plugins/basic/document.js';
 import * as treeMod              from '@anna/plugins/basic/tree.js';
+// data source utilities
+import {fetchDataSource, getCacheAge} from '@anna/plugins/data/_dataSource.js';
+// plugin shapes — data
+import * as tableMod            from '@anna/plugins/data/table.js';
+import * as barChartMod         from '@anna/plugins/data/barChart.js';
+import * as lineChartMod        from '@anna/plugins/data/lineChart.js';
+import * as pieChartMod         from '@anna/plugins/data/pieChart.js';
+import * as areaChartMod        from '@anna/plugins/data/areaChart.js';
+import * as donutChartMod       from '@anna/plugins/data/donutChart.js';
+import * as scatterChartMod     from '@anna/plugins/data/scatterChart.js';
+import * as radarChartMod       from '@anna/plugins/data/radarChart.js';
+import * as funnelChartMod      from '@anna/plugins/data/funnelChart.js';
+import * as gaugeChartMod       from '@anna/plugins/data/gaugeChart.js';
+import * as stackedBarChartMod  from '@anna/plugins/data/stackedBarChart.js';
+import * as hbarChartMod        from '@anna/plugins/data/hbarChart.js';
 // svg / vector
 import * as svgMod              from '@anna/core/shapes/svg.js';
 // mind map
@@ -99,7 +152,10 @@ const SHAPE_MODULES = [
     hexagonMod, octagonMod, crossMod, trapezoidMod, chevronMod,
     checkmarkMod, xmarkMod, databaseMod, phoneMod, monitorMod,
     tabletMod, documentMod, treeMod,
-    securityMod, symbolsMod,
+    securityMod, symbolsMod, vehiclesMod, insectsMod,
+    tableMod, barChartMod, lineChartMod, pieChartMod, areaChartMod,
+    donutChartMod, scatterChartMod, radarChartMod, funnelChartMod,
+    gaugeChartMod, stackedBarChartMod, hbarChartMod,
     svgMod,
     mindMod, topicMod, subTopicMod,
 ];
@@ -133,6 +189,19 @@ const TOOL_TYPE_MAP = {
     document:           'document',
     tree:               'tree',
     svg:                'svg',
+    // data — table & charts
+    table:              'table',
+    barChart:           'barChart',
+    lineChart:          'lineChart',
+    pieChart:           'pieChart',
+    areaChart:          'areaChart',
+    donutChart:         'donutChart',
+    scatterChart:       'scatterChart',
+    radarChart:         'radarChart',
+    funnelChart:        'funnelChart',
+    gaugeChart:         'gaugeChart',
+    stackedBarChart:    'stackedBarChart',
+    hbarChart:          'hbarChart',
     // mind map — only the container is user-placed; topic/subTopic are keyboard-driven
     mind:               'mind',
     // icons — security
@@ -181,6 +250,38 @@ const TOOL_TYPE_MAP = {
     registered:         'registered',
     biohazard:          'biohazard',
     peace:              'peace',
+    // icons — vehicles
+    car:                'car',
+    truck:              'truck',
+    bus:                'bus',
+    bicycle:            'bicycle',
+    motorcycle:         'motorcycle',
+    airplane:           'airplane',
+    helicopter:         'helicopter',
+    ship:               'ship',
+    train:              'train',
+    rocket:             'rocket',
+    submarine:          'submarine',
+    ambulance:          'ambulance',
+    fireEngine:         'fireEngine',
+    tractor:            'tractor',
+    sailboat:           'sailboat',
+    taxi:               'taxi',
+    scooter:            'scooter',
+    drone:              'drone',
+    forklift:           'forklift',
+    tank:               'tank',
+    // insects
+    butterfly:          'butterfly',
+    bee:                'bee',
+    ant:                'ant',
+    beetle:             'beetle',
+    ladybug:            'ladybug',
+    spider:             'spider',
+    dragonfly:          'dragonfly',
+    mosquito:           'mosquito',
+    caterpillar:        'caterpillar',
+    snail:              'snail',
 };
 
 // ─── 应用状态 ─────────────────────────────────────────────────────────────────
@@ -226,8 +327,32 @@ async function initEngine() {
     if (g.loadConfig) g.loadConfig();
 
     annPage = g.addPage('Page 1', undefined, canvasDiv);
+    // 引擎创建页面后立即设置页面背景色（否则 page.backColor 默认 'white'）
+    annPage.backColor = CANVAS_THEMES[currentThemeIndex].canvasBg;
+
+    // 白板就绪后自动拉取所有 API 数据源（fire-and-forget）
+    fetchAllDataSources(g, annPage);
 
     return {g, page: annPage};
+}
+
+/**
+ * 遍历当前页面所有 API 模式的图表 shape，逐个拉取远端数据并触发重绘。
+ * 成功时更新 localStorage 缓存；失败时保留上次缓存数据（shape 继续渲染旧数据）。
+ */
+async function fetchAllDataSources(graph, page) {
+    if (!page) return;
+    const shapes = page.sm.shapes.filter(
+        s => s.dataSourceType === 'api' && (s.dataSourceUrl || '').trim()
+    );
+    for (const s of shapes) {
+        const result = await fetchDataSource(s);
+        const age    = result.ok ? getCacheAge(s.id) : null;
+        s._dsStatus  = result.ok ? `✓ ${age || '刚刚'}` : `✗ ${result.error}`;
+        if (result.ok && graph) {
+            graph.change(() => { s.invalidate?.(); });
+        }
+    }
 }
 
 // ─── 工具切换 ─────────────────────────────────────────────────────────────────
@@ -279,6 +404,7 @@ function getDefaultProperties(type) {
         backColor:    THEME.shapeBackColor,
         borderColor:  THEME.shapeBorderColor,
         borderWidth:  THEME.shapeBorderWidth,
+        fontColor:    THEME.shapeFontColor,
         cornerRadius: 8,
         globalAlpha:  1,
     };
@@ -351,6 +477,19 @@ function getDefaultProperties(type) {
     if (type === 'registered')                return {...base, width: 90,  height: 90};
     if (type === 'biohazard')                 return {...base, width: 90,  height: 90};
     if (type === 'peace')                     return {...base, width: 90,  height: 90};
+    // data — table & charts
+    if (type === 'table')                     return {...base, width: 210, height: 130};
+    if (type === 'barChart')                  return {...base, width: 220, height: 150};
+    if (type === 'lineChart')                 return {...base, width: 220, height: 150};
+    if (type === 'pieChart')                  return {...base, width: 200, height: 150};
+    if (type === 'areaChart')                 return {...base, width: 220, height: 150};
+    if (type === 'donutChart')                return {...base, width: 200, height: 150};
+    if (type === 'scatterChart')              return {...base, width: 220, height: 150};
+    if (type === 'radarChart')                return {...base, width: 200, height: 180};
+    if (type === 'funnelChart')               return {...base, width: 160, height: 200};
+    if (type === 'gaugeChart')                return {...base, width: 220, height: 150};
+    if (type === 'stackedBarChart')           return {...base, width: 220, height: 160};
+    if (type === 'hbarChart')                 return {...base, width: 220, height: 150};
     if (type === 'svg')                       return {width: 200, height: 200, backColor: 'transparent', borderWidth: 0};
     if (type === 'mind')                      return {...base, width: 200, height: 100};
     if (type === 'line')                      return {};
@@ -425,33 +564,153 @@ function updateStatusBar() {
     }
 }
 
-// ─── 主题切换 ─────────────────────────────────────────────────────────────────
+// ─── 主题选择器 ───────────────────────────────────────────────────────────────
+
+const themeDropdown  = $('theme-dropdown');
+const themePicker    = $('theme-picker');
+
+/** 将 CANVAS_THEMES 渲染为下拉选项（初始化时调用一次） */
+function buildThemeDropdown() {
+    if (!themeDropdown) return;
+    themeDropdown.innerHTML = '';
+    CANVAS_THEMES.forEach((theme, idx) => {
+        const btn = document.createElement('button');
+        btn.className  = 'theme-option';
+        btn.dataset.idx = idx;
+        btn.setAttribute('role', 'option');
+        btn.innerHTML = `
+            <span class="theme-swatch" style="background:${theme.canvasBg}"></span>
+            <span class="theme-opt-label">${theme.label}</span>
+            <svg class="theme-opt-check" viewBox="0 0 12 10" fill="none">
+                <path d="M1 5l3.5 3.5L11 1" stroke="currentColor" stroke-width="1.8"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>`;
+        btn.addEventListener('click', () => applyTheme(idx));
+        themeDropdown.appendChild(btn);
+    });
+}
+
+/** 更新下拉选项的激活状态 */
+function syncDropdownActive() {
+    if (!themeDropdown) return;
+    themeDropdown.querySelectorAll('.theme-option').forEach(btn => {
+        btn.classList.toggle('active', Number(btn.dataset.idx) === currentThemeIndex);
+    });
+}
+
+/** 打开 / 关闭主题下拉 */
+function toggleThemeDropdown(e) {
+    e.stopPropagation();
+    if (!themeDropdown) return;
+    const isOpen = !themeDropdown.classList.contains('hidden');
+    if (isOpen) {
+        closeThemeDropdown();
+    } else {
+        themeDropdown.classList.remove('hidden');
+        themePicker && themePicker.classList.add('open');
+        syncDropdownActive();
+    }
+}
+
+function closeThemeDropdown() {
+    themeDropdown && themeDropdown.classList.add('hidden');
+    themePicker && themePicker.classList.remove('open');
+}
+
+/** 应用指定索引的主题 */
+function applyTheme(idx) {
+    currentThemeIndex = idx;
+    applyCanvasTheme();
+    applyColorsToAllShapes();
+    closeThemeDropdown();
+}
+
+/** 将所有用户形状的颜色同步到当前主题（非图标形状立即可见改变） */
+function applyColorsToAllShapes() {
+    if (!annPage || !annGraph) return;
+    const theme = CANVAS_THEMES[currentThemeIndex];
+    annGraph.change(() => {
+        annPage.sm.shapes.forEach(s => {
+            if (s.type === 'freeLine') {
+                s.borderColor = THEME.penColor;
+            } else if (s.type === 'line' || s.type === 'connector') {
+                s.borderColor = theme.shapeBorderColor;
+            } else if (s.type === 'svg') {
+                // SVG 形状颜色由内容决定，不干预
+            } else {
+                s.backColor   = theme.shapeBackColor;
+                s.borderColor = theme.shapeBorderColor;
+                s.fontColor   = theme.shapeFontColor;
+            }
+            s.invalidate && s.invalidate();
+        });
+    });
+}
+
+/** 触发所有形状重绘，使图标主题立即生效 */
+function invalidateAllShapes() {
+    if (!annPage) return;
+    annPage.sm.getShapes().forEach(s => s.invalidate && s.invalidate());
+}
 
 function applyCanvasTheme() {
     const theme = CANVAS_THEMES[currentThemeIndex];
-    canvasDiv.style.background = theme.canvasBg;
-    if (btnTheme) btnTheme.title = '切换画布主题：' + theme.label;
-}
 
-function cycleTheme() {
-    currentThemeIndex = (currentThemeIndex + 1) % CANVAS_THEMES.length;
-    applyCanvasTheme();
+    // ── 引擎页面背景色（真正的 page.backColor，影响展示/导出）──
+    // annPage 在 initEngine 之前为 null；initEngine 内会直接赋值，此处仅在已就绪时更新
+    if (annPage) annPage.backColor = theme.canvasBg;
+
+    // ── 画布容器 CSS 兜底（万一引擎未渲染时露出的底色）──
+    canvasDiv.style.background = theme.canvasBg;
+
+    // ── 外框背景色 + 点阵颜色（通过 CSS 变量控制）──
+    const root = document.documentElement;
+    root.style.setProperty('--canvas-wrapper-bg',  theme.wrapperBg  || '#111420');
+    root.style.setProperty('--canvas-dot-color',   theme.wrapperDot || 'rgba(255,255,255,0.06)');
+
+    // ── 图标渲染模式 ──
+    iconTheme.mode = theme.iconMode || 'flat';
+
+    // ── 主题 chip 标签 ──
+    const chip = document.getElementById('theme-chip');
+    if (chip) {
+        chip.textContent   = theme.label;
+        chip.dataset.theme = theme.id;
+    }
+    if (btnTheme) btnTheme.title = '主题（当前：' + theme.label + '）';
 }
 
 // ─── 键盘快捷键 ───────────────────────────────────────────────────────────────
+//
+//  引擎 (page.js) 已处理的快捷键（此处不重复，避免双重触发）：
+//    Ctrl+Z          撤销
+//    Ctrl+Shift+Z    重做
+//    Ctrl+A          全选
+//    Ctrl+D          复制
+//    Ctrl+G          编组（注：若选中矩形形状，rectangle.js 会先拦截为"切换进度条"）
+//    Ctrl+L          切换连线模式（仅对 line 形状有效）
+//    Ctrl+E          切换关注状态（仅对矩形形状有效）
+//    Ctrl+I          循环提示徽章（仅对矩形形状有效）
+//    Ctrl+1~9        设置优先级（仅对矩形形状有效）
+//    Delete/Backspace 删除
+//    Arrow keys      移动
+//    Shift+= / Shift+- 缩放
+//
+//  此处仅注册引擎未覆盖的快捷键：
 
 function bindKeyboard() {
     document.addEventListener('keydown', e => {
         if (document.getElementById('whiteboard-view').classList.contains('hidden')) return;
         if (document.activeElement !== document.body) return;
 
-        if (e.ctrlKey && !e.shiftKey && e.key === 'z') { e.preventDefault(); undo(); return; }
-        if (e.ctrlKey && e.shiftKey  && e.key === 'z') { e.preventDefault(); redo(); return; }
-        if (e.ctrlKey && e.key === 'y')                { e.preventDefault(); redo(); return; }
-        if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); deleteSelected(); return; }
-        if (e.ctrlKey && e.key === '0') { e.preventDefault(); fitScreen(); return; }
+        // Ctrl+Y — 重做（引擎只有 Ctrl+Shift+Z，此处补充 Ctrl+Y 惯用写法）
+        if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redo(); return; }
 
-        if (!e.ctrlKey && !e.altKey) {
+        // Ctrl+0 — 适应屏幕（引擎无此快捷键）
+        if ((e.ctrlKey || e.metaKey) && e.key === '0') { e.preventDefault(); fitScreen(); return; }
+
+        // 单字母工具切换（无修饰键时）
+        if (!e.ctrlKey && !e.metaKey && !e.altKey) {
             const keyMap = {
                 v: 'select', r: 'rectangle', e: 'ellipse',
                 t: 'triangle', d: 'diamond', l: 'line', f: 'freeLine',
@@ -460,8 +719,9 @@ function bindKeyboard() {
             if (keyMap[e.key.toLowerCase()]) { setTool(keyMap[e.key.toLowerCase()]); return; }
         }
 
-        if (e.key === '+' || e.key === '=') setZoom(ZOOM_STEP);
-        if (e.key === '-')                  setZoom(-ZOOM_STEP);
+        // +/- 缩放（引擎使用 Shift+=/-，此处补充无 Shift 写法）
+        if (!e.ctrlKey && !e.metaKey && (e.key === '+' || e.key === '=')) setZoom(ZOOM_STEP);
+        if (!e.ctrlKey && !e.metaKey && e.key === '-')                    setZoom(-ZOOM_STEP);
     });
 }
 
@@ -500,7 +760,16 @@ function bindButtons() {
     btnZoomIn.addEventListener('click',  () => setZoom(ZOOM_STEP));
     btnZoomOut.addEventListener('click', () => setZoom(-ZOOM_STEP));
     btnZoomFit.addEventListener('click', fitScreen);
-    btnTheme && btnTheme.addEventListener('click', cycleTheme);
+    btnTheme && btnTheme.addEventListener('click', toggleThemeDropdown);
+    // 点击下拉区以外时关闭
+    document.addEventListener('click', e => {
+        if (themePicker && !themePicker.contains(e.target)) closeThemeDropdown();
+    });
+    // Esc 关闭
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeThemeDropdown();
+    });
+    buildThemeDropdown();
 }
 
 // ─── 导出：白板初始化入口 ─────────────────────────────────────────────────────

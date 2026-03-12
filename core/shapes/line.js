@@ -8,6 +8,7 @@ import {shape} from '../base/shape.js';
 import {svgLineDrawer} from '../drawers/lineDrawer.js';
 import {connector} from '../interaction/connector.js';
 import {lineHelper} from "./lineHelper.js";
+import {lineDisplayFields} from '../properties/shapeDisplayFields.js';
 
 /**
  * 线：anna体系里最重要，也是最难的一个形状
@@ -57,6 +58,7 @@ const line = (id, x, y, width, height, parent, drawer) => {
     self.lineMode = LINEMODE.STRAIGHT;
     self.allowShine = false;
     self.allowSwitchLineMode = true;
+    self.getDisplayFields = () => lineDisplayFields();
     //------------------------------------
     /**
      * 线连接的不同形式，dragTo的方式不一样.
@@ -796,6 +798,12 @@ const line = (id, x, y, width, height, parent, drawer) => {
         self.lineMode = LINEMODE[value.type.toUpperCase()]
         self.invalidate();
     });
+    self.addDetection(["allowShine"], (property, value) => {
+        self.enableAnimation = !!value;
+        self.invalidate?.();
+        if (value && self.page) self.page.startAnimation();
+    });
+    if (self.allowShine) self.enableAnimation = true;
     self.addDetection(["fromShape"], (property, value, preValue) => {
         self.preFromShape = preValue;
     });

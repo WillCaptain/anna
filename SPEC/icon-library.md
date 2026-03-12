@@ -73,8 +73,8 @@ context.stroke();
 |---|---|---|---|---|
 | 01 | 安全与司法 | ✅ 全部完成 | 16 | 16 |
 | 02 | 标志与符号 | ✅ 全部完成 | 28 | 28 |
-| 03 | 车辆 | ⬜ 未开始 | 0 | 20 |
-| 04 | 虫子 | ⬜ 未开始 | 0 | 10 |
+| 03 | 车辆 | ✅ 全部完成 | 20 | 20 |
+| 04 | 虫子 | ✅ 全部完成 | 10 | 10 |
 | 05 | 动物 | ⬜ 未开始 | 0 | 25 |
 | 06 | 分析 | ⬜ 未开始 | 0 | 18 |
 | 07 | 风景 | ⬜ 未开始 | 0 | 15 |
@@ -168,41 +168,41 @@ context.stroke();
 
 | icon type | 中文 | 状态 |
 |---|---|---|
-| `car` | 轿车 | ⬜ |
-| `truck` | 卡车 | ⬜ |
-| `bus` | 公交车 | ⬜ |
-| `bicycle` | 自行车 | ⬜ |
-| `motorcycle` | 摩托车 | ⬜ |
-| `airplane` | 飞机 | ⬜ |
-| `helicopter` | 直升机 | ⬜ |
-| `ship` | 轮船 | ⬜ |
-| `train` | 火车 | ⬜ |
-| `rocket` | 火箭 | ⬜ |
-| `submarine` | 潜水艇 | ⬜ |
-| `ambulance` | 救护车 | ⬜ |
-| `fireEngine` | 消防车 | ⬜ |
-| `tractor` | 拖拉机 | ⬜ |
-| `sailboat` | 帆船 | ⬜ |
-| `taxi` | 出租车 | ⬜ |
-| `scooter` | 电动车 | ⬜ |
-| `drone` | 无人机 | ⬜ |
-| `forklift` | 叉车 | ⬜ |
-| `tank` | 坦克 | ⬜ |
+| `car` | ✅ | 轿车 | ⬜ |
+| `truck` | ✅ | 卡车 | ⬜ |
+| `bus` | ✅ | 公交车 | ⬜ |
+| `bicycle` | ✅ | 自行车 | ⬜ |
+| `motorcycle` | ✅ | 摩托车 | ⬜ |
+| `airplane` | ✅ | 飞机 | ⬜ |
+| `helicopter` | ✅ | 直升机 | ⬜ |
+| `ship` | ✅ | 轮船 | ⬜ |
+| `train` | ✅ | 火车 | ⬜ |
+| `rocket` | ✅ | 火箭 | ⬜ |
+| `submarine` | ✅ | 潜水艇 | ⬜ |
+| `ambulance` | ✅ | 救护车 | ⬜ |
+| `fireEngine` | ✅ | 消防车 | ⬜ |
+| `tractor` | ✅ | 拖拉机 | ⬜ |
+| `sailboat` | ✅ | 帆船 | ⬜ |
+| `taxi` | ✅ | 出租车 | ⬜ |
+| `scooter` | ✅ | 电动车 | ⬜ |
+| `drone` | ✅ | 无人机 | ⬜ |
+| `forklift` | ✅ | 叉车 | ⬜ |
+| `tank` | ✅ | 坦克 | ⬜ |
 
 ## 04 — 虫子 (`plugins/icons/insects.js`)
 
 | icon type | 中文 | 状态 |
 |---|---|---|
-| `butterfly` | 蝴蝶 | ⬜ |
-| `bee` | 蜜蜂 | ⬜ |
-| `ant` | 蚂蚁 | ⬜ |
-| `beetle` | 甲虫 | ⬜ |
-| `ladybug` | 瓢虫 | ⬜ |
-| `spider` | 蜘蛛 | ⬜ |
-| `dragonfly` | 蜻蜓 | ⬜ |
-| `mosquito` | 蚊子 | ⬜ |
-| `caterpillar` | 毛毛虫 | ⬜ |
-| `snail` | 蜗牛 | ⬜ |
+| `butterfly` | 蝴蝶 | ✅ |
+| `bee` | 蜜蜂 | ✅ |
+| `ant` | 蚂蚁 | ✅ |
+| `beetle` | 甲虫 | ✅ |
+| `ladybug` | 瓢虫 | ✅ |
+| `spider` | 蜘蛛 | ✅ |
+| `dragonfly` | 蜻蜓 | ✅ |
+| `mosquito` | 蚊子 | ✅ |
+| `caterpillar` | 毛毛虫 | ✅ |
+| `snail` | 蜗牛 | ✅ |
 
 ## 05 — 动物 (`plugins/icons/animals.js`)
 

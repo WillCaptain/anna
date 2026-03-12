@@ -101,6 +101,80 @@ export const groupField = (id, label, fields, opts = {}) => ({
     ...opts,
 });
 
+/**
+ * Tab 页签。作为属性面板顶部标签页的容器，包含若干子字段（可直接是 field，也可是 groupField）。
+ *
+ * 当 shape.getDisplayFields() 返回的数组全部为 tabField 时，渲染器自动切换为 Tab 布局。
+ *
+ * @param {string}   id     - 唯一标识，也用于 DOM data-tab
+ * @param {string}   label  - 标签文字（简短）
+ * @param {Array}    fields - 子字段描述符数组（field 或 groupField）
+ * @param {string}   opts.icon - SVG/emoji 图标字符串（可选）
+ */
+export const tabField = (id, label, fields, opts = {}) => ({
+    id,
+    label,
+    type: 'tab',
+    fields: [...fields].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+    order: opts.order ?? 0,
+    icon: opts.icon ?? null,
+    ...opts,
+});
+
+/**
+ * 多行文本输入字段（用于 JSON 数据编辑等场景）。
+ * @param {Function} opts.onChange  - (shapes, value, graph) => void
+ * @param {number}   opts.rows      - 显示行数（默认 5）
+ */
+export const textareaField = (key, label, opts = {}) => ({
+    key,
+    label,
+    type: 'textarea',
+    rows: opts.rows ?? 5,
+    placeholder: opts.placeholder ?? '',
+    order: opts.order ?? 0,
+    onChange: opts.onChange ?? null,
+    ...opts,
+});
+
+/**
+ * 单行文本输入字段。
+ * @param {string}   opts.placeholder  - 占位文字
+ * @param {object}   opts.visibleWhen  - { key, value } 条件可见（由渲染器处理）
+ */
+export const inputField = (key, label, opts = {}) => ({
+    key,
+    label,
+    type:        'input',
+    placeholder: opts.placeholder ?? '',
+    order:       opts.order ?? 0,
+    visibleWhen: opts.visibleWhen ?? null,
+    onChange:    opts.onChange ?? null,
+    ...opts,
+});
+
+/**
+ * 操作按钮字段（触发异步动作，如"立即获取"）。
+ *
+ * onClick 签名：(shapes: Shape[], graph: Graph) => Promise<void>
+ *   执行完毕后，渲染器会自动读取 shape[statusKey] 更新状态文字。
+ *
+ * @param {string}   opts.btnLabel   - 按钮文字
+ * @param {string}   opts.statusKey  - shape 属性名，用于显示状态文字
+ * @param {object}   opts.visibleWhen
+ */
+export const actionField = (key, label, opts = {}) => ({
+    key,
+    label,
+    type:       'action',
+    btnLabel:   opts.btnLabel ?? label,
+    statusKey:  opts.statusKey ?? null,
+    order:      opts.order ?? 0,
+    visibleWhen: opts.visibleWhen ?? null,
+    onClick:    opts.onClick ?? null,
+    ...opts,
+});
+
 // ─── 便捷组合 ─────────────────────────────────────────────────────────────────
 
 /**
