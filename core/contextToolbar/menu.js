@@ -138,16 +138,31 @@ const colorPickerMenu = (type, config, target) => {
     const createDom = self.createDom;
     self.createDom = (m) => {
         const menu = createDom.call(self, m);
+        menu.style.display        = 'flex';
+        menu.style.flexDirection  = 'column';
+        menu.style.alignItems     = 'center';
+        menu.style.gap            = '2px';
+
         const input = document.createElement("input");
         input.type = "color";
         input.value = self.config.defaultValue;
         input.classList.add("input-menu");
+        if (m.text) input.title = m.text;
 
         input.addEventListener("change", function () {
             self.config.onChange && self.config.onChange(input.value, self.target);
             selectShapes(self.target);
         });
         menu.appendChild(input);
+
+        if (m.text) {
+            const label = document.createElement('span');
+            label.className = 'text';
+            label.style.cssText = 'font-size:10px;line-height:1;white-space:nowrap;';
+            label.textContent = m.text;
+            menu.appendChild(label);
+        }
+
         return menu;
     }
     return self;

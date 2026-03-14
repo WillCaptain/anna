@@ -46,6 +46,7 @@ const LOCALE_ZH = {
     'grp.connectors':   '连接线',
     'grp.arrows':       '箭头',
     // shape button labels
+    's.frame':          '容器',
     's.rectangle':      '矩形',
     's.ellipse':        '椭圆',
     's.triangle':       '三角',
@@ -409,6 +410,12 @@ const LOCALE_ZH = {
     'menu.sendDown':     '向下一层',
     'menu.bringTop':     '到最顶层',
     'menu.sendBottom':   '到最底层',
+    'menu.backColor':    '填充色',
+    'menu.borderColor':  '边框色',
+    'menu.fontColor':    '文字色',
+    'menu.zoomContent':  '缩放内容',
+    'menu.zoomIn':       '放大',
+    'menu.zoomOut':      '缩小',
 };
 
 const LOCALE_EN = {
@@ -448,6 +455,7 @@ const LOCALE_EN = {
     'grp.extended':     'Extended',
     'grp.connectors':   'Connectors',
     'grp.arrows':       'Arrows',
+    's.frame':          'Frame',
     's.rectangle':      'Rect',
     's.ellipse':        'Ellipse',
     's.triangle':       'Triangle',
@@ -750,6 +758,12 @@ const LOCALE_EN = {
     'menu.sendDown':     'Send Backward',
     'menu.bringTop':     'Bring to Front',
     'menu.sendBottom':   'Send to Back',
+    'menu.backColor':    'Fill Color',
+    'menu.borderColor':  'Border Color',
+    'menu.fontColor':    'Text Color',
+    'menu.zoomContent':  'Zoom Content',
+    'menu.zoomIn':       'Zoom In',
+    'menu.zoomOut':      'Zoom Out',
 };
 
 export const isZh = typeof navigator !== 'undefined'

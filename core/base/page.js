@@ -680,7 +680,6 @@ const page = (div, graph, name, id, iDrawer = interactDrawer, pDrawer = pageDraw
 
   self.initialize = () => {
     // init areas
-    self.warmupAudio('click', 'click.mp3');
   };
 
   self.dispose = () => {
@@ -2328,6 +2327,11 @@ const setMouseActions = (pageVal) => {
     }
     pageVal.mousedownShape.rotatePosition(position);
     pageVal.mousedownShape.onMouseDrag(position);
+    // 多选普通拖动（非 handle 拖动）时，平移 groupBox 选择框使其跟随形状
+    const _gb = pageVal.interactDrawer?.groupBox;
+    if (_gb?.isActive() && !pageVal.mousedownShape.isTypeof?.('groupBox')) {
+      _gb.translateBounds(position.deltaX, position.deltaY);
+    }
     if (pageVal.guideLineInstance) {
       pageVal.guideLineInstance.clear();
       pageVal.guideLineInstance.showGuideLines(position);
@@ -2410,7 +2414,19 @@ const setMouseActions = (pageVal) => {
       const pendingProperties = pageVal.wantedShape.getProperties();
       pageVal.wantedShape.clear();
       pluginMeta.import(pendingType, pageVal.graph).then(() => {
-        pageVal.mousedownShape = pageVal.createNew(pendingType, position.x, position.y, undefined, pendingProperties);
+        // 若点击落在有 contentZoom 的容器内，需将视觉坐标逆变换到逻辑坐标再创建，
+        // 否则 shape 会被放置在错误位置（CSS scale 已将内容放大/缩小）。
+        let createX = position.x;
+        let createY = position.y;
+        const _clickedCtn = pageVal.find(position.x, position.y,
+          s => s.isTypeof('container') && s.contentZoom && s.contentZoom !== 1);
+        if (_clickedCtn !== pageVal) {
+          const cz = _clickedCtn.contentZoom;
+          const bw = _clickedCtn.borderWidth || 0;
+          createX = _clickedCtn.x + bw + (position.x - _clickedCtn.x) / cz;
+          createY = _clickedCtn.y + bw + (position.y - _clickedCtn.y) / cz;
+        }
+        pageVal.mousedownShape = pageVal.createNew(pendingType, createX, createY, undefined, pendingProperties);
         if (!pageVal.mousedownShape.disableNewResize) {
           pageVal.mousedownShape.beginDrag(position.x, position.y);
           pageVal.mousedownShape.select();
@@ -2687,6 +2703,16 @@ const setKeyActions = (pageVal) => {
       pageVal.zoom(-0.1);
       return false;
     }
+    // Ctrl+= / Ctrl+-：对选中的单个 container/group 进行内容缩放（画中画）
+    if (pageVal.ctrlKeyPressed && (e.code === 'Equal' || e.code === 'Minus')) {
+      const focusedContainers = focused.filter(s => s.zoomBy);
+      if (focusedContainers.length > 0) {
+        e.preventDefault();
+        const delta = e.code === 'Equal' ? 0.1 : -0.1;
+        focusedContainers.forEach(s => s.zoomBy(delta));
+        return false;
+      }
+    }
     // redo
     if (pageVal.ctrlKeyPressed && e.shiftKey && (e.code === 'KeyZ')) {
       pageVal.graph.getHistory().redo(pageVal);
@@ -2735,7 +2761,13 @@ const setKeyActions = (pageVal) => {
         let shapes = JSON.stringify(serializeShapes(allowed));
         pageVal.copyPasteHelper.pasteShapes(shapes, '', pageVal);
       }
-
+      // 新 shape 通过 select()→beginEdit() 会开启 contenteditable + pointerEvents，
+      // 调用 endEdit() 关闭编辑态，防止文本元素抢走键盘焦点，保证连续 Ctrl+D 可用。
+      pageVal.getFocusedShapes().forEach(s => s.endEdit?.());
+      pageVal.invalidateInteraction();
+      // 用 setTimeout 确保在所有微任务（形状位置更新）完成后再还焦到 body，
+      // 避免异步渲染管线再次将焦点转移走。
+      setTimeout(() => document.body.focus(), 0);
       return false;
     }
 

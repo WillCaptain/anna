@@ -68,9 +68,20 @@ const rectangle = (id, x, y, width, height, parent, drawer = rectangleDrawer) =>
     return dirty;
   };
 
+  // Apply the immediate container's contentZoom inverse to a position.
+  // convertPositionWithParents skips the contentZoom of its first argument (isTarget=true),
+  // so we manually apply it afterwards.
+  const _applyContainerCz = (ctn, pos) => {
+    if (!ctn || ctn === ctn.page || !ctn.contentZoom || ctn.contentZoom === 1) return pos;
+    const cz = ctn.contentZoom;
+    const bw = ctn.borderWidth || 0;
+    return {x: ctn.x + bw + (pos.x - ctn.x) / cz, y: ctn.y + bw + (pos.y - ctn.y) / cz};
+  };
+
   let transformDelta = (self, x, y, deltaX, deltaY) => {
-    const p1 = convertPositionWithParents(self.getContainer(), x, y);
-    const p2 = convertPositionWithParents(self.getContainer(), x - deltaX, y - deltaY);
+    const _ctn = self.getContainer?.();
+    const p1 = _applyContainerCz(_ctn, convertPositionWithParents(self.getContainer(), x, y));
+    const p2 = _applyContainerCz(_ctn, convertPositionWithParents(self.getContainer(), x - deltaX, y - deltaY));
     // ---------------------still not working for rotated shape in rotated container-------------------------
     // 度数转换为弧度制.
     const degree = self.rotateDegree * Math.PI / 180;
@@ -588,7 +599,8 @@ const rectangle = (id, x, y, width, height, parent, drawer = rectangleDrawer) =>
       let cx = self.width / 2 + self.x;
       let cy = self.height / 2 + self.y;
 
-      let pos = convertPositionWithParents(self.getContainer(), x, y);
+      const _ctn = self.getContainer?.();
+      let pos = _applyContainerCz(_ctn, convertPositionWithParents(self.getContainer(), x, y));
       let x1 = pos.x;
       let y1 = pos.y;
 

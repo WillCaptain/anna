@@ -302,6 +302,10 @@
             </button>
             <div class="shape-group-body">
               <div class="shape-grid">
+                <button class="shape-item" data-tool="frame" title="容器">
+                  <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="1.8" fill="none" stroke-dasharray="4 2.5"/></svg>
+                  <span data-i18n="s.frame">容器</span>
+                </button>
                 <button class="shape-item" data-tool="rectangle" title="矩形 (R)">
                   <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>
                   <span data-i18n="s.rectangle">矩形</span>
@@ -1470,5 +1474,7 @@
 </div>
 
 <script type="module" src="/src/main.js"></script>
+<!-- zoom badge 必须作为 body 直接子元素，避免被 whiteboard 内任何 transform 祖先影响 fixed 定位 -->
+<div id="zoom-badge"></div>
 </body>
 </html>

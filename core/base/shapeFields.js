@@ -19,7 +19,7 @@ all.shape = ['id', 'x', 'y', 'width', 'height', 'backAlpha', 'globalAlpha', 'cor
 
 all.rectangle = ['emphasized', 'priority', 'infoType', 'progressStatus', 'progressPercent', 'showedProgress', 'emphasizeType', 'shineColor1', 'shineColor2', 'assignTo', 'shared', 'sharedBy'];
 
-all.container = ['dockMode', 'dockAlign', 'itemPad', 'itemSpace', 'itemScroll', 'division'];
+all.container = ['dockMode', 'dockAlign', 'itemPad', 'itemSpace', 'itemScroll', 'division', 'contentZoom'];
 
 all.page = ['background', 'editable', 'timerCode', 'loadCode',
   'animationCode', 'bulletSpeed', 'shapesAs', 'displayPageNumber', 'displayDateTime',
@@ -75,8 +75,7 @@ all.topic = ['status', 'direction', 'root', 'attaches', 'parent'];
 
 all.presentation = ['isTemplate', 'basePage', 'animations', 'inMethod', 'outMethod', 'geoScale', 'isTerminal'];
 all.presentationPage = ['isTemplate', 'basePage', 'animations', 'inMethod', 'outMethod', 'geoScale', 'isTerminal'];
-all.frame = ['pros', 'cons', 'socialCode'];
-all.frame.delete = ['x', 'y', 'borderColor'];
+all.frame = [];
 
 all.dependency = ['fromFitable'];
 all.umlInterface = ['isExpanded'];

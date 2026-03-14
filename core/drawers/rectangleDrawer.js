@@ -183,11 +183,8 @@ const contextMenuDrawer = (shapeLength, baseDrawer = drawer) => {
         let drawStatic = self.drawStatic;
 
         self.drawStatic = (x, y) => {
-            if (shapeLength > 1) {
-                self.parent.style.border = "2px dashed #aeb5c0";
-            } else {
-                self.parent.style.border = "0px dashed #aeb5c0";
-            }
+            // groupBox now renders the multi-select bounding frame; no extra CSS border needed
+            self.parent.style.border = "none";
             drawStatic.call(self, x, y);
         };
         return self;

@@ -4,7 +4,7 @@
 
 import { container } from "../base/container.js";
 import { groupDrawer } from "../drawers/groupDrawer.js";
-
+import { computeShapesBounds } from "../../common/util.js";
 /**
  *
  * 把一群shape合成一个大shape
@@ -30,6 +30,14 @@ const group = (id, x, y, width, height, parent, drawer = groupDrawer) => {
     self.removeDetection("backColor");
     self.removeDetection("dashWidth");
 
+    // Group 不需要的 container 功能：禁用 dock 布局、滚动、动态拖入、内容裁剪
+    self.scrollAble       = false;
+    self.dynamicAddItem   = false;
+    self.ifMaskItems      = false;
+    self.autoFit          = false;
+    self.arrangeShapes    = () => {};  // 无 dock 排列
+    self.scroll           = () => {};  // 无滚动
+
     self.preResize = self.resize;
     self.resize = (width, height) => {
         if (self.autoAlign) {
@@ -53,42 +61,34 @@ const group = (id, x, y, width, height, parent, drawer = groupDrawer) => {
         self.select();
         self.invalidate();
     };
-    const convertx = s => {
-        if (s.width < 0) {
-            return s.x + s.width;
-        } else {
-            return s.x;
-        }
-    }
-    const converty = s => {
-        if (s.height < 0) {
-            return s.y + s.height;
-        } else {
-            return s.y;
-        }
-    }
     self.invalidate = () => self.invalidateAlone();
 
     const invalidateAlone = self.invalidateAlone;
     self.invalidateAlone = () => {
-        if (self.page.isReady && self.autoAlign) {
-            const shapes = self.getShapes().filter(s => {
-                if (!s.visible || s.ignoreAutoFit) return false;
-                // When the container has a family, only include shapes with a matching family.
-                // Shapes with no family (family === "" or undefined) are excluded.
-                if (self.family) return s.family === self.family;
-                return true;
-            });
-            if (shapes.length > 0) {
-                self.x = Math.min(...shapes.map(s => convertx(s))) - self.groupBorder;
-                self.y = Math.min(...shapes.map(s => converty(s))) - self.groupBorder;
-                self.width = Math.max(...shapes.map(s => convertx(s) + Math.abs(s.width))) + self.groupBorder - self.x;
-                self.height = Math.max(...shapes.map(s => converty(s) + Math.abs(s.height))) + self.groupBorder - self.y;
+        // 当 group 自身正在被拖动或通过 connector 调整时，跳过 bounds 重算与子形状级联刷新，
+        // 避免 effectGroup 链路每帧多次触发 atom setter / DOM 写操作导致的闪烁偏移。
+        const isInteracting = self.inDragging || self.mousedownConnector;
+
+        if (!isInteracting) {
+            if (self.page.isReady && self.autoAlign) {
+                const shapes = self.getShapes().filter(s => {
+                    if (!s.visible || s.ignoreAutoFit) return false;
+                    // When the container has a family, only include shapes with a matching family.
+                    // Shapes with no family (family === "" or undefined) are excluded.
+                    if (self.family) return s.family === self.family;
+                    return true;
+                });
+                const b = computeShapesBounds(shapes);
+                if (b) {
+                    self.x      = b.x1 - self.groupBorder;
+                    self.y      = b.y1 - self.groupBorder;
+                    self.width  = (b.x2 - b.x1) + self.groupBorder * 2;
+                    self.height = (b.y2 - b.y1) + self.groupBorder * 2;
+                }
             }
+            self.getShapes().forEach(s => s.invalidate());
         }
 
-        self.getShapes().forEach(s => s.invalidate());
-        self.arrangeShapes();
         invalidateAlone.call(self);
     };
 

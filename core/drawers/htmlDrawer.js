@@ -407,8 +407,12 @@ const drawer = (shape, div, x = 0, y = 0) => {
     }
 
     if (shape.isFocused) {
-      self.drawFocusFrame(context);
-      self.drawConnectors(context, s => s.dragable);
+      // 多选时（isBulkFocused）不绘制单形状的手柄和选框，由 groupBox 统一处理
+      const isBulkFocused = (shape.page?.getFocusedShapes?.()?.length ?? 0) > 1;
+      if (!isBulkFocused) {
+        self.drawFocusFrame(context);
+        self.drawConnectors(context, s => s.dragable);
+      }
     } else if (shape.linking) {
       self.drawLinkingFrame(context);
       self.drawConnectors(context, s => s.getConnectable());

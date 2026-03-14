@@ -24,24 +24,12 @@ const cursorDrawer = (() => {
         return CURSORS.POINTER;
     };
     let createRotateImage = function (context, x, y, degree, page, shape) {
-        const scale = page.scaleX > 1 ? page.scaleX : 1;
-        let r = 5 * scale;
-        context.strokeStyle = drawer.color;
-        context.fillStyle = drawer.color;
-        context.beginPath();
-        context.lineWidth = scale;
-        context.ellipse(x, y, r, r, 0, 0.9, 2 * Math.PI);
-        context.stroke();
-        context.beginPath();
-        context.ellipse(x, y, 2 * Number(scale), 2 * Number(scale), 0, 0, 2 * Math.PI);
-        context.fill();
-        context.beginPath();
-        context.moveTo(x + r - 2 * Number(scale), y - Number(scale));
-        context.lineTo(x + r + 2 * Number(scale), y - Number(scale));
-        context.lineTo(x + r, y + 3 * Number(scale));
-        context.closePath();
-        context.fill();
-        return CURSORS.NONE;
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M12 6v3l4-4-4-4v3c-4.42 0-8 3.58-8 8 0 1.57.46 3.03 1.24 4.26L6.7 14.8c-.45-.83-.7-1.79-.7-2.8 0-3.31 2.69-6 6-6zm6.76 1.74L17.3 9.2c.44.84.7 1.79.7 2.8 0 3.31-2.69 6-6 6v-3l-4 4 4 4v-3c4.42 0 8-3.58 8-8 0-1.57-.46-3.03-1.24-4.26z" fill="#7c6ff7" stroke="white" stroke-width="0.5"/></svg>`;
+        try {
+            return `url("data:image/svg+xml;base64,${btoa(svg)}") 12 12, crosshair`;
+        } catch (_) {
+            return 'crosshair';
+        }
     };
     let createDefaultImage = function (context, x, y, rotateDegree, graphPage) {
         displayGridGrab(context, x, y, graphPage);

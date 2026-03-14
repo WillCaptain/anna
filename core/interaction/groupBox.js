@@ -2,6 +2,8 @@
  *  Copyright (c) 2026 12th.ai Studio. All rights reserved.
  *--------------------------------------------------------------------------------------------*/
 
+import {computeShapesBounds} from '../../common/util.js';
+
 /**
  * Group selection bounding box.
  *
@@ -14,12 +16,13 @@
  *   - screen coords:  (logical + page.x) * page.scaleX
  */
 
-const HANDLE_D     = 8;   // resize handle square side (screen px)
+const HANDLE_D     = 12;  // resize handle square side (screen px) — matches single-select connector size
 const HANDLE_HIT_R = 10;  // hit-test radius (screen px)
 const ROT_OFFSET   = 24;  // rotate handle: px above the top-center
 const BOX_COLOR    = '#7c6ff7'; // --accent purple
 const FILL_COLOR   = '#ffffff';
 const STROKE_COLOR = '#7c6ff7';
+const BOX_PAD      = 1;   // extra px outside the tight AABB for visual breathing room
 
 /** Cursor to use for each handle name. */
 const HANDLE_CURSORS = {
@@ -63,20 +66,7 @@ const groupBox = (page) => {
   self.activeHandle = null;
 
   // ─── helpers ──────────────────────────────────────────────────────────────
-  const computeBounds = (shapes) => {
-    if (!shapes.length) return null;
-    let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
-    shapes.forEach(s => {
-      const f = s.getShapeFrame
-        ? s.getShapeFrame()
-        : {x1: s.x, y1: s.y, x2: s.x + s.width, y2: s.y + s.height};
-      if (f.x1 < x1) x1 = f.x1;
-      if (f.y1 < y1) y1 = f.y1;
-      if (f.x2 > x2) x2 = f.x2;
-      if (f.y2 > y2) y2 = f.y2;
-    });
-    return (x1 < Infinity) ? {x1, y1, x2, y2} : null;
-  };
+  const computeBounds = computeShapesBounds;
 
   const toScreen = (lx, ly) => ({
     x: (lx + page.x) * page.scaleX,
@@ -120,9 +110,10 @@ const groupBox = (page) => {
       S:      rot(lcx, b.y2),
       SW:     rot(b.x1, b.y2),
       W:      rot(b.x1, lcy),
-      // Rotate handle: ROT_OFFSET screen-px "above" N in the rotated direction
+      // Rotate handle: ROT_OFFSET screen-px above the top-center in the rotated "outward" direction.
+      // Outward normal of the top edge after rotating by rotRad is (+sin, -cos) in screen coords.
       rotate: {
-        x: N.x - Math.sin(rotRad) * ROT_OFFSET,
+        x: N.x + Math.sin(rotRad) * ROT_OFFSET,
         y: N.y - Math.cos(rotRad) * ROT_OFFSET,
       },
     };
@@ -167,62 +158,60 @@ const groupBox = (page) => {
     const lcy    = (b.y1 + b.y2) / 2;
     const rotRad = angle * Math.PI / 180;
 
+    // Expand drawing bounds by BOX_PAD screen px (cosmetic breathing room).
+    const pad = BOX_PAD / (page.scaleX || 1);
+    const db  = {x1: b.x1 - pad, y1: b.y1 - pad, x2: b.x2 + pad, y2: b.y2 + pad};
+
     const rotS = (lx, ly) => {
       const p = rotL(lx, ly, lcx, lcy, angle);
       return toScreen(p.x, p.y);
     };
 
-    // ── Rotated bounding frame ─────────────────────────────────────────────
-    const tl = rotS(b.x1, b.y1);
-    const tr = rotS(b.x2, b.y1);
-    const br = rotS(b.x2, b.y2);
-    const bl = rotS(b.x1, b.y2);
+    // ── Rotated bounding frame — same dash style as single-select drawFocusFrame ──
+    const tl = rotS(db.x1, db.y1);
+    const tr = rotS(db.x2, db.y1);
+    const br = rotS(db.x2, db.y2);
+    const bl = rotS(db.x1, db.y2);
 
-    ctx.save();
-    ctx.strokeStyle = BOX_COLOR;
-    ctx.lineWidth   = 1.5;
-    ctx.setLineDash([5, 4]);
-    ctx.beginPath();
-    ctx.moveTo(tl.x, tl.y);
-    ctx.lineTo(tr.x, tr.y);
-    ctx.lineTo(br.x, br.y);
-    ctx.lineTo(bl.x, bl.y);
-    ctx.closePath();
-    ctx.stroke();
-    ctx.restore();
+    ctx.dashedLineTo(tl.x, tl.y, tr.x, tr.y, 5, 1.5, BOX_COLOR);
+    ctx.dashedLineTo(tr.x, tr.y, br.x, br.y, 5, 1.5, BOX_COLOR);
+    ctx.dashedLineTo(br.x, br.y, bl.x, bl.y, 5, 1.5, BOX_COLOR);
+    ctx.dashedLineTo(bl.x, bl.y, tl.x, tl.y, 5, 1.5, BOX_COLOR);
 
-    // ── Handles ───────────────────────────────────────────────────────────
-    const handles = handlePositions(b, angle);
+    // ── Handles — same style as single-select connectors ──────────────────
+    const handles = handlePositions(db, angle);
     const N = handles.N;
+    const hHalf = HANDLE_D / 2;
 
     Object.entries(handles).forEach(([name, pos]) => {
       ctx.save();
+      ctx.setLineDash([]);
+      ctx.lineWidth   = 1;
       ctx.fillStyle   = FILL_COLOR;
       ctx.strokeStyle = STROKE_COLOR;
-      ctx.lineWidth   = 1.5;
-      ctx.setLineDash([]);
       if (name === 'rotate') {
-        // Connecting line from N handle to rotate handle
+        // Connecting line from N handle to the near edge of the rotate circle.
+        // Direction from rotate handle toward N is (-sin, +cos), so near edge is pos + (-sin, cos)*r.
         ctx.beginPath();
         ctx.strokeStyle = BOX_COLOR;
         ctx.moveTo(N.x, N.y);
-        // Touch the near edge of the circle (in the direction toward N)
         ctx.lineTo(
-          pos.x + Math.sin(rotRad) * (HANDLE_D / 2),
-          pos.y + Math.cos(rotRad) * (HANDLE_D / 2),
+          pos.x - Math.sin(rotRad) * hHalf,
+          pos.y + Math.cos(rotRad) * hHalf,
         );
         ctx.stroke();
-        // Circle
-        ctx.fillStyle   = FILL_COLOR;
+        // Circle — same as round connector
         ctx.strokeStyle = STROKE_COLOR;
         ctx.beginPath();
-        ctx.arc(pos.x, pos.y, HANDLE_D / 2, 0, Math.PI * 2);
+        ctx.arc(pos.x, pos.y, hHalf, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
       } else {
-        // Square handle
-        ctx.fillRect(  pos.x - HANDLE_D / 2, pos.y - HANDLE_D / 2, HANDLE_D, HANDLE_D);
-        ctx.strokeRect(pos.x - HANDLE_D / 2, pos.y - HANDLE_D / 2, HANDLE_D, HANDLE_D);
+        // Square — same as rect connector: offset +1 to match connector.draw()
+        ctx.beginPath();
+        ctx.rect(pos.x - hHalf + 1, pos.y - hHalf + 1, HANDLE_D, HANDLE_D);
+        ctx.fill();
+        ctx.stroke();
       }
       ctx.restore();
     });
@@ -243,6 +232,24 @@ const groupBox = (page) => {
       if (d <= HANDLE_HIT_R) return name;
     }
     return null;
+  };
+
+  /**
+   * Translate display bounds by (dx, dy) logical units — called by page.mouseDrag
+   * when the user drags selected shapes without using a handle.
+   */
+  self.translateBounds = (dx, dy) => {
+    if (!self.isActive() || _dragging) return;
+    if (!_displayBounds) {
+      const b = computeBounds(_shapes);
+      if (b) _displayBounds = {...b};
+      else return;
+    }
+    _displayBounds.x1 += dx;
+    _displayBounds.y1 += dy;
+    _displayBounds.x2 += dx;
+    _displayBounds.y2 += dy;
+    self.draw();
   };
 
   // Pseudo-shape interface for page event dispatch

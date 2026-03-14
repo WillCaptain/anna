@@ -43,12 +43,34 @@ const _containerDrawer = (shape, div, x, y, baseDrawer) => {
     self.parent.style.height = `${height / shape.scaleY}px`;
   };
 
+  // Zoom badge: shown in top-right of container's outer div when contentZoom !== 1
+  self._czBadge = document.createElement('div');
+  self._czBadge.style.cssText = `
+    position:absolute;top:4px;right:4px;padding:2px 7px;border-radius:10px;
+    background:#7c6ff7;color:#fff;font-size:11px;font-weight:700;
+    pointer-events:none;user-select:none;z-index:9;opacity:0;
+    transition:opacity 0.2s;white-space:nowrap;
+  `;
+  self.parent.appendChild(self._czBadge);
+
   self.containerResize = (width, height) => {
+    const bw = shape.borderWidth || 0;
     self.container.style.overflow = shape.ifMaskItems ? 'hidden' : 'visible';
     self.container.style.left = '0px';
     self.container.style.top = '0px';
-    self.container.style.width = `${width - (2 * shape.borderWidth)}px`;
-    self.container.style.height = `${height - (2 * shape.borderWidth)}px`;
+    self.container.style.width = `${width - 2 * bw}px`;
+    self.container.style.height = `${height - 2 * bw}px`;
+    // 画中画缩放：只缩放内容 div，不动外框
+    const cz = shape.contentZoom || 1;
+    self.container.style.transform = cz === 1 ? '' : `scale(${cz})`;
+    self.container.style.transformOrigin = '0 0';
+    // Update zoom badge
+    if (cz === 1) {
+      self._czBadge.style.opacity = '0';
+    } else {
+      self._czBadge.textContent = Math.round(cz * 100) + '%';
+      self._czBadge.style.opacity = '1';
+    }
   };
 
   let resize = self.resize;

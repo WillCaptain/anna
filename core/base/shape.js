@@ -7,6 +7,8 @@ import {
   convertPositionWithParents,
   eventDebounce,
   getDistance,
+  getRotatedConnectorCursor,
+  getVisualPosition,
   isNumeric,
   isPointInRect,
   isRectInRect,
@@ -30,6 +32,21 @@ import {lockRegion} from '../interaction/hitRegion.js';
 import {imageSaver} from '../shapes/thumb.js';
 import {inPolygon} from '../../common/graphics.js';
 import {copyIcon, deleteIcon} from '../shapes/svg_icons.js';
+
+// 将任意 CSS 颜色字符串转为 #rrggbb（供 <input type="color"> 使用）
+const _toHexColor = (color) => {
+    if (!color) return '#ffffff';
+    const s = String(color).trim();
+    if (/^#[0-9a-f]{6}$/i.test(s)) return s;
+    if (/^#[0-9a-f]{3}$/i.test(s)) {
+        return `#${s[1]}${s[1]}${s[2]}${s[2]}${s[3]}${s[3]}`;
+    }
+    const m = s.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+    if (m) {
+        return `#${(+m[1]).toString(16).padStart(2,'0')}${(+m[2]).toString(16).padStart(2,'0')}${(+m[3]).toString(16).padStart(2,'0')}`;
+    }
+    return '#ffffff';
+};
 
 /**
  * Shape — 所有图形的抽象基类
@@ -824,40 +841,78 @@ const shape = (id, x, y, width, height, parent, drawer) => {
    * @maliya
    */
   self.getContextMenuScript = () => {
-    return {
-      menus: [
-        {
-          type: 'icon',
-          name: 'copy',
-          icon: copyIcon,
-          text: t('menu.copy'),
-          group: 'base',
-          onClick: function (target) {
-            const event = new KeyboardEvent('keydown', {
-              ctrlKey: true,
-              keyCode: 68,
-              code: 'KeyD',
-            });
-            document.dispatchEvent(event);
-          },
+    const isLine = self.isType('line') || self.isType('freeLine');
+    const menus = [
+      {
+        type: 'icon',
+        name: 'copy',
+        icon: copyIcon,
+        text: t('menu.copy'),
+        group: 'base',
+        onClick: function (target) {
+          const event = new KeyboardEvent('keydown', {
+            ctrlKey: true,
+            keyCode: 68,
+            code: 'KeyD',
+          });
+          document.dispatchEvent(event);
         },
-        {
-          type: 'icon',
-          name: 'delete',
-          icon: deleteIcon,
-          text: t('menu.delete'),
-          group: 'base',
-          onClick: function (target) {
-            const shapes = Array.isArray(target) ? target : [target];
-            const page = shapes.length > 0 ? shapes[0].page : null;
-            if (!page) return;
-            // Pass true so freeLine.remove(removeSelf=true) deletes the whole shape,
-            // not just the currently-selected strokes within it.
-            page.getFocusedShapes().forEach(s => s.remove && s.remove(true));
-          },
+      },
+      {
+        type: 'icon',
+        name: 'delete',
+        icon: deleteIcon,
+        text: t('menu.delete'),
+        group: 'base',
+        onClick: function (target) {
+          const shapes = Array.isArray(target) ? target : [target];
+          const page = shapes.length > 0 ? shapes[0].page : null;
+          if (!page) return;
+          page.getFocusedShapes().forEach(s => s.remove && s.remove(true));
         },
-      ],
-    };
+      },
+    ];
+
+    // 快捷颜色属性（colorPicker）
+    if (!isLine) {
+      menus.push({
+        type: 'colorPicker',
+        name: 'backColor',
+        group: 'props',
+        text: t('menu.backColor'),
+        defaultValue: _toHexColor(self.getBackColor?.() || self.backColor || '#ffffff'),
+        onChange: (value, shapes) => {
+          const arr = Array.isArray(shapes) ? shapes : [shapes];
+          arr[0]?.page?.graph?.change(() => arr.forEach(s => { s.backColor = value; }));
+        },
+      });
+    }
+    menus.push({
+      type: 'colorPicker',
+      name: 'borderColor',
+      group: 'props',
+      text: t('menu.borderColor'),
+      defaultValue: _toHexColor(self.getBorderColor?.() || self.borderColor || '#000000'),
+      onChange: (value, shapes) => {
+        const arr = Array.isArray(shapes) ? shapes : [shapes];
+        arr[0]?.page?.graph?.change(() => arr.forEach(s => { s.borderColor = value; }));
+      },
+    });
+    if (!isLine) {
+      menus.push({
+        type: 'colorPicker',
+        name: 'fontColor',
+        group: 'props',
+        text: t('menu.fontColor'),
+        defaultValue: _toHexColor(self.fontColor || '#333333'),
+        onChange: (value, shapes) => {
+          const arr = Array.isArray(shapes) ? shapes : [shapes];
+          arr[0]?.page?.graph?.change(() => arr.forEach(s => { s.fontColor = value; s.render?.(); }));
+        },
+      });
+    }
+
+    return { menus };
   };
 
   /**
@@ -1016,6 +1071,7 @@ const shape = (id, x, y, width, height, parent, drawer) => {
       },
     });
     menus.push(layer);
+
     return menus;
   };
 
@@ -2111,6 +2167,17 @@ const setMouseActions = (shapeVal) => {
     }
     shapeVal.runCode('mouseUpCode');
   };
+  // 累积 shape 自身及所有祖先容器的旋转角度，用于 connector cursor 方向修正
+  const _getTotalRotation = s => {
+    let deg = s.rotateDegree || 0;
+    let p = s.getContainer();
+    while (p && p !== s.page) {
+      deg += (p.rotateDegree || 0);
+      p = p.getContainer();
+    }
+    return deg;
+  };
+
   shapeVal.onMouseMove = position => {
     shapeVal.runCode('mouseMoveCode');
     if (shapeVal.page.cursor === CURSORS.PEN) {
@@ -2122,7 +2189,8 @@ const setMouseActions = (shapeVal) => {
 
     // 类型为connection的connector，在鼠标移动时，不应该进行处理，否则会导致鼠标移动绘制异常.
     if (conn !== null && conn.type !== 'connection') {
-      shapeVal.page.cursor = conn.direction.cursor;
+      const rotatedCursor = getRotatedConnectorCursor(conn.direction.key, _getTotalRotation(shapeVal));
+      shapeVal.page.cursor = rotatedCursor !== undefined ? rotatedCursor : conn.direction.cursor;
     } else {
       const r = shapeVal.getHitRegion(position.x, position.y, CURSORS.MOVE);
       if (r.isMock) {
@@ -2221,7 +2289,8 @@ const setMouseActions = (shapeVal) => {
    * @param focusedShapes 选中的图形.
    */
   shapeVal.resizeOrRotate = (position, focusedShapes) => {
-    shapeVal.page.cursor = shapeVal.mousedownConnector.direction.cursor;
+    const _rrc = getRotatedConnectorCursor(shapeVal.mousedownConnector.direction.key, _getTotalRotation(shapeVal));
+    shapeVal.page.cursor = _rrc !== undefined ? _rrc : shapeVal.mousedownConnector.direction.cursor;
     const originalX = position.x;
     const originalY = position.y;
     const xDiff = originalX - shapeVal.x - (shapeVal.width / 2);
@@ -2298,9 +2367,21 @@ const setMouseActions = (shapeVal) => {
     while (parent !== currentShape.page) {
       const noDock = parent.dockMode === DOCK_MODE.NONE && currentShape.pDock === PARENT_DOCK_MODE.NONE;
       if (parent.isChildDragable() || noDock) {
+        // 若直接父容器有 contentZoom，则鼠标在逻辑坐标系移动了 deltaX，
+        // 但视觉上只移动了 deltaX * cz；子 shape 的逻辑坐标需相应缩放，
+        // 使其跟手感与视觉一致（不会提前到达边缘）。
+        const cz = parent.contentZoom || 1;
+        if (cz !== 1) {
+          position.deltaX /= cz;
+          position.deltaY /= cz;
+        }
         parent.onChildDragTo(currentShape, position);
         currentShape.dragTo(position);
         currentShape.page.moveToContainer(currentShape);
+        if (cz !== 1) {
+          position.deltaX *= cz;
+          position.deltaY *= cz;
+        }
         break;
       } else {
         currentShape = parent;
@@ -2413,8 +2494,9 @@ const setCoordinateIndex = shapeVal => {
     const frame = shapeVal.getShapeFrame(true);
     let x1 = frame.x1;
     let y1 = frame.y1;
-    const x2 = frame.x2;
-    const y2 = frame.y2;
+    let x2 = frame.x2;
+    let y2 = frame.y2;
+
     x1 = Math.floor(x1 / STEP) * STEP;
     y1 = Math.floor(y1 / STEP) * STEP;
     for (let x = x1; x < x2; x += STEP) {
@@ -2434,10 +2516,12 @@ const setCoordinateIndex = shapeVal => {
     let x2 = x1 + Math.abs(shapeVal.width) + (2 * margin);
     let y2 = y1 + Math.abs(shapeVal.height) + (2 * margin);
 
-    let p1 = convertPositionWithParents(shapeVal, x1, y1);
-    let p2 = convertPositionWithParents(shapeVal, x2, y1);
-    let p3 = convertPositionWithParents(shapeVal, x2, y2);
-    let p4 = convertPositionWithParents(shapeVal, x1, y2);
+    // 正向变换：shape 逻辑角坐标 → 视觉坐标，innermost→outermost 顺序
+    // 正确反映嵌套容器的 contentZoom + rotation 叠加效果
+    const p1 = getVisualPosition(shapeVal, x1, y1);
+    const p2 = getVisualPosition(shapeVal, x2, y1);
+    const p3 = getVisualPosition(shapeVal, x2, y2);
+    const p4 = getVisualPosition(shapeVal, x1, y2);
 
     return {
       x1: Math.min(p1.x, p2.x, p3.x, p4.x),

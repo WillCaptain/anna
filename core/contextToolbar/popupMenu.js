@@ -142,6 +142,9 @@ const popupMenu = (() => {
             'user-select:none', 'cursor:default',
         ].join(';');
 
+        // 同一层级最多同时显示一个子菜单，用共享变量追踪
+        let currentSubEl = null;
+
         items.forEach(m => {
             if (m.text === undefined) {
                 const sep = document.createElement('div');
@@ -169,26 +172,27 @@ const popupMenu = (() => {
                 item.appendChild(arrow);
             }
 
-            let subEl = null;
             item.addEventListener('mouseenter', () => {
                 item.style.background = 'rgba(0,120,215,0.1)';
-                // close any sibling submenus opened by other items at this level
-                root.querySelectorAll(`[${POPUP_ATTR}]`).forEach(s => s.remove());
-                subEl = null;
+                // 关闭同级其他子菜单（submenus append 到 body，querySelectorAll 找不到，必须用共享变量）
+                if (currentSubEl) { currentSubEl.remove(); currentSubEl = null; }
                 if (m.menus && m.menus.length > 0) {
                     const r = item.getBoundingClientRect();
-                    subEl = buildMenu(shape, m.menus, r.right + 2, r.top);
-                    document.body.appendChild(subEl);
-                    fitInViewport(subEl, r.right + 2, r.top);
+                    currentSubEl = buildMenu(shape, m.menus, r.right + 2, r.top);
+                    document.body.appendChild(currentSubEl);
+                    fitInViewport(currentSubEl, r.right + 2, r.top);
                 }
             });
             item.addEventListener('mouseleave', (e) => {
-                if (subEl && subEl.contains(e.relatedTarget)) return;
+                if (currentSubEl && currentSubEl.contains(e.relatedTarget)) return;
                 item.style.background = '';
             });
+            // 自定义渲染（如颜色选择器），不触发 action/dismiss
+            if (m.render) m.render(item, shape);
+
             item.addEventListener('mousedown', (e) => {
                 e.stopPropagation();
-                if (!m.menus && m.action) { m.action(shape); dismiss(); }
+                if (!m.menus && !m.render && m.action) { m.action(shape); dismiss(); }
             });
             root.appendChild(item);
         });

@@ -6,6 +6,7 @@ import {ALIGN, DIVISION, DOCK_MODE, PARENT_DOCK_MODE} from '../../common/const.j
 
 import {rectangle} from '../shapes/rectangle.js';
 import {containerDrawer} from '../drawers/containerDrawer.js';
+import {t} from '../../src/i18n.js';
 
 /**
  * 容器
@@ -35,6 +36,22 @@ const container = (id, x, y, width, height, parent, drawer, initializing) => {
     self.scrollAble = false;// 是否可以滚动
     self.scaleX = self.scaleY = 1;
     self.autoFit = false;
+    self.contentZoom = 1;  // 画中画缩放系数（序列化存储）
+
+    /**
+     * 画中画缩放：只更新 contentZoom 比例并重新渲染，不修改任何子 shape 数据。
+     * 子 shape 的 x/y/width/height 保持不变；视觉缩放由 containerDrawer 通过
+     * CSS transform 实现；hit test 由 convertPositionWithParents 自动补偿。
+     * 拖出容器后子 shape 自动恢复原始大小（因数据从未改变）。
+     * @param {number} factor 缩放增量，如 0.1 = 放大 10%，-0.1 = 缩小 10%
+     */
+    self.zoomBy = (factor) => {
+        self.contentZoom = Math.max(0.1, Math.min(10, (self.contentZoom || 1) * (1 + factor)));
+        self.invalidate();
+        // contentZoom 改变后，子 shape 的视觉位置发生变化，必须重建空间索引，
+        // 否则 filterPositionShapes 查到的区域坐标与新视觉位置不匹配。
+        self.getShapes().forEach(s => s.indexCoordinate?.());
+    };
 
     self.scale = (scaleX, scaleY) => {
       let scaleXVal = scaleX;
@@ -467,6 +484,37 @@ const container = (id, x, y, width, height, parent, drawer, initializing) => {
                 position.deltaX = 0;
             }
         }
+    };
+
+    // 在 followBar 中追加"缩放内容"按钮（适用于所有 container 子类）
+    const _baseGetContextMenuScript = self.getContextMenuScript;
+    self.getContextMenuScript = () => {
+        const script = _baseGetContextMenuScript?.call(self) ?? { menus: [] };
+        script.menus.push(
+            {
+                type: 'icon',
+                name: 'zoomIn',
+                group: 'zoom',
+                icon: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/><line x1="16" y1="16" x2="21" y2="21"/></svg>`,
+                text: t('menu.zoomIn'),
+                onClick: (shapes) => {
+                    const arr = Array.isArray(shapes) ? shapes : [shapes];
+                    arr.forEach(s => s.zoomBy?.(0.1));
+                },
+            },
+            {
+                type: 'icon',
+                name: 'zoomOut',
+                group: 'zoom',
+                icon: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="8" y1="11" x2="14" y2="11"/><line x1="16" y1="16" x2="21" y2="21"/></svg>`,
+                text: t('menu.zoomOut'),
+                onClick: (shapes) => {
+                    const arr = Array.isArray(shapes) ? shapes : [shapes];
+                    arr.forEach(s => s.zoomBy?.(-0.1));
+                },
+            },
+        );
+        return script;
     };
 
     return self;

@@ -8,7 +8,7 @@
  */
 
 import {graph} from '@anna/core/base/graph.js';
-import {EVENT_TYPE} from '@anna/common/const.js';
+import {EVENT_TYPE, PAGE_OPERATION_MODE} from '@anna/common/const.js';
 import {t, isZh} from './i18n.js';
 import {initPropertiesPanel, syncPanelFromShapes} from './propertiesPanel.js';
 import {iconTheme} from '@anna/plugins/icons/iconTheme.js';
@@ -103,6 +103,7 @@ import * as bottomArrowMod       from '@anna/core/shapes/arrows/bottomArrow.js';
 import * as dovetailArrowMod     from '@anna/core/shapes/arrows/dovetailArrow.js';
 import * as leftAndRightArrowMod from '@anna/core/shapes/arrows/leftAndRightArrow.js';
 // plugin shapes — basic
+import * as frameMod             from '@anna/plugins/basic/frame.js';
 import * as hexagonMod           from '@anna/plugins/basic/hexagon.js';
 import * as octagonMod           from '@anna/plugins/basic/octagon.js';
 import * as crossMod             from '@anna/plugins/basic/cross.js';
@@ -147,7 +148,7 @@ import * as subTopicMod         from '@anna/plugins/mind/subTopic.js';
 
 const SHAPE_MODULES = [
     connectorMod, containerMod, rectangleMod, ellipseMod, lineMod,
-    freeLineMod, groupMod, triangleMod, diamondMod, parallelogramMod,
+    freeLineMod, groupMod, frameMod, triangleMod, diamondMod, parallelogramMod,
     pentagramMod, regularPentMod, roundedCalloutMod,
     rightArrowMod, bottomArrowMod, dovetailArrowMod, leftAndRightArrowMod,
     hexagonMod, octagonMod, crossMod, trapezoidMod, chevronMod,
@@ -162,6 +163,7 @@ const SHAPE_MODULES = [
 ];
 
 const TOOL_TYPE_MAP = {
+    frame:              'frame',
     rectangle:          'rectangle',
     ellipse:            'ellipse',
     triangle:           'triangle',
@@ -311,6 +313,7 @@ const btnSaveDropdown = $('btn-save-dropdown');
 const saveDropdown   = $('save-dropdown');
 const saveGroup      = $('save-group');
 const zoomLabel      = $('zoom-label');
+const zoomBadge      = $('zoom-badge');
 const statusTool     = $('status-tool');
 const statusShapes   = $('status-shapes');
 const statusSelected = $('status-selected');
@@ -499,6 +502,14 @@ function getDefaultProperties(type) {
     if (type === 'hbarChart')                 return {...base, width: 220, height: 150};
     if (type === 'svg')                       return {width: 200, height: 200, backColor: 'transparent', borderWidth: 0};
     if (type === 'mind')                      return {...base, width: 200, height: 100};
+    if (type === 'frame')                     return {
+        width: 300, height: 200,
+        backColor:    'rgba(124,111,247,0.06)',
+        borderColor:  THEME.shapeBorderColor,
+        borderWidth:  1.5,
+        cornerRadius: 8,
+        globalAlpha:  1,
+    };
     if (type === 'line')                      return {};
     if (type === 'freeLine')                  return {borderColor: THEME.penColor, borderWidth: THEME.penWidth};
     return base;
@@ -536,20 +547,37 @@ function updateHistoryBtns() {
 
 // ─── 缩放 ─────────────────────────────────────────────────────────────────────
 
+function syncZoomDisplay(zoom) {
+    const pct = Math.round(zoom * 100);
+    zoomLabel.textContent = pct + '%';
+    // #region agent log
+    console.log('[DBG-3a0def][H-D]',JSON.stringify({loc:'whiteboard.js:syncZoom',pct,zoomBadgeNull:zoomBadge===null,badgeId:zoomBadge?.id,cls:zoomBadge?.className}));
+    // #endregion
+    if (!zoomBadge) return;
+    if (pct === 100) {
+        zoomBadge.classList.remove('visible');
+    } else {
+        zoomBadge.textContent = pct + '%';
+        zoomBadge.classList.add('visible');
+    }
+}
+
 function setZoom(rate) {
     if (!annPage) return;
     const newZoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, currentZoom + rate));
     const delta   = newZoom - currentZoom;
     currentZoom   = newZoom;
     annPage.zoom(delta);
-    zoomLabel.textContent = Math.round(currentZoom * 100) + '%';
+    syncZoomDisplay(currentZoom);
+    minimapMarkDirty();
 }
 
 function fitScreen() {
     if (!annPage) return;
     annPage.fillScreen(true);
     currentZoom = annPage.scaleX || 1;
-    zoomLabel.textContent = Math.round(currentZoom * 100) + '%';
+    syncZoomDisplay(currentZoom);
+    minimapMarkDirty();
 }
 
 // ─── 属性面板（由 propertiesPanel.js 动态渲染，无需在此写 sync 函数）────────
@@ -770,6 +798,36 @@ function _drawShapeOnCanvas(ctx, shape, originX, originY) {
         ctx.translate(-cx, -cy);
     }
 
+    // SVG 线形状（line / freeLine）：用 Path2D 直接重播 SVG 路径
+    const svgEl = parent.querySelector('svg');
+    if (svgEl) {
+        const svgLeft = parseFloat(svgEl.style.left) || 0;
+        const svgTop  = parseFloat(svgEl.style.top)  || 0;
+        ctx.save();
+        ctx.translate(dx + svgLeft, dy + svgTop);
+        svgEl.querySelectorAll('path').forEach(pathEl => {
+            const stroke = pathEl.getAttribute('stroke');
+            if (!stroke || stroke === 'none') return; // 跳过 shadow/不可见路径
+            const d = pathEl.getAttribute('d');
+            if (!d) return;
+            const dashArray = pathEl.getAttribute('stroke-dasharray');
+            ctx.strokeStyle = stroke;
+            ctx.lineWidth   = parseFloat(pathEl.getAttribute('stroke-width')) || 2;
+            ctx.lineCap     = pathEl.getAttribute('stroke-linecap')  || 'butt';
+            ctx.lineJoin    = pathEl.getAttribute('stroke-linejoin') || 'miter';
+            if (dashArray && dashArray !== 'none') {
+                ctx.setLineDash(dashArray.split(/[\s,]+/).map(Number).filter(n => !isNaN(n) && n >= 0));
+            } else {
+                ctx.setLineDash([]);
+            }
+            ctx.beginPath();
+            ctx.stroke(new Path2D(d));
+        });
+        ctx.restore();
+        ctx.restore();
+        return;
+    }
+
     // 优先使用 canvas 渲染（canvasGeometryDrawer 系列形状）
     const staticCanvas = parent.querySelector('canvas[id^="static:"]');
     if (staticCanvas && staticCanvas.width > 0 && staticCanvas.height > 0) {
@@ -896,8 +954,24 @@ function savePng(withBg = _saveWithBg) {
 //  此处仅注册引擎未覆盖的快捷键：
 
 function bindKeyboard() {
+    let _spaceDown = false;
+
     document.addEventListener('keydown', e => {
         if (document.getElementById('whiteboard-view').classList.contains('hidden')) return;
+
+        // Space 键：切换到画布拖拽模式（不要求 activeElement === body，但排除文本输入）
+        if (e.code === 'Space' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            const tag = document.activeElement?.tagName;
+            const inText = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT'
+                        || document.activeElement?.isContentEditable;
+            if (!inText && !_spaceDown) {
+                _spaceDown = true;
+                e.preventDefault();
+                if (annPage) annPage.operationMode = PAGE_OPERATION_MODE.DRAG;
+            }
+            return;
+        }
+
         if (document.activeElement !== document.body) return;
 
         // Ctrl+Y — 重做（引擎只有 Ctrl+Shift+Z，此处补充 Ctrl+Y 惯用写法）
@@ -914,6 +988,13 @@ function bindKeyboard() {
         // +/- 缩放（引擎使用 Shift+=/-，此处补充无 Shift 写法）
         if (!e.ctrlKey && !e.metaKey && (e.key === '+' || e.key === '=')) setZoom(ZOOM_STEP);
         if (!e.ctrlKey && !e.metaKey && e.key === '-')                    setZoom(-ZOOM_STEP);
+    });
+
+    document.addEventListener('keyup', e => {
+        if (e.code === 'Space' && _spaceDown) {
+            _spaceDown = false;
+            if (annPage) annPage.operationMode = PAGE_OPERATION_MODE.SELECTION;
+        }
     });
 }
 
@@ -978,6 +1059,232 @@ function bindButtons() {
     buildThemeDropdown();
 }
 
+// ─── 画布平移：滚轮 + 中键拖拽 ───────────────────────────────────────────────
+
+function bindCanvasPan() {
+    const wrapper = document.getElementById('canvas-wrapper') || canvasDiv;
+
+    // 滚轮：Ctrl+滚轮 = 缩放，普通滚轮 = 平移，Shift+滚轮 = 水平平移
+    wrapper.addEventListener('wheel', e => {
+        if (!annPage) return;
+        if (e.target.closest?.('[contenteditable]')) return;
+        e.preventDefault();
+
+        // 统一 deltaMode 到像素
+        let dx = e.deltaX, dy = e.deltaY;
+        if (e.deltaMode === 1) { dx *= 24; dy *= 24; }
+        else if (e.deltaMode === 2) { dx *= wrapper.clientWidth; dy *= wrapper.clientHeight; }
+
+        if (e.ctrlKey || e.metaKey) {
+            // Ctrl + 滚轮 = 缩放（以鼠标位置为中心）
+            const delta = dy > 0 ? -ZOOM_STEP : ZOOM_STEP;
+            setZoom(delta);
+        } else if (e.shiftKey) {
+            // Shift + 滚轮 = 水平平移
+            const speed = 1 / (annPage.scaleX || 1);
+            annPage.moveTo(annPage.x - dy * speed, annPage.y);
+            minimapMarkDirty();
+        } else {
+            // 普通滚轮 = 垂直平移（trackpad 双向）
+            const speed = 1 / (annPage.scaleX || 1);
+            annPage.moveTo(annPage.x - dx * speed, annPage.y - dy * speed);
+            minimapMarkDirty();
+        }
+    }, { passive: false });
+
+    // 中键拖拽平移（button === 1）
+    let _midDrag = false, _midX = 0, _midY = 0;
+    wrapper.addEventListener('mousedown', e => {
+        if (e.button !== 1 || !annPage) return;
+        e.preventDefault();
+        _midDrag = true;
+        _midX = e.clientX;
+        _midY = e.clientY;
+        annPage.operationMode = PAGE_OPERATION_MODE.DRAG;
+    });
+    document.addEventListener('mousemove', e => {
+        if (!_midDrag || !annPage) return;
+        const scale = annPage.scaleX || 1;
+        annPage.moveTo(annPage.x + (e.clientX - _midX) / scale,
+                       annPage.y + (e.clientY - _midY) / scale);
+        _midX = e.clientX;
+        _midY = e.clientY;
+        minimapMarkDirty();
+    });
+    document.addEventListener('mouseup', e => {
+        if (e.button === 1 && _midDrag) {
+            _midDrag = false;
+            if (annPage) annPage.operationMode = PAGE_OPERATION_MODE.SELECTION;
+        }
+    });
+}
+
+// ─── 缩略图（Minimap）────────────────────────────────────────────────────────
+
+let _minimapCanvas = null;
+let _minimapDirty  = true;
+let _minimapLoopId = null;
+const MINIMAP_W    = 180;
+const MINIMAP_H    = 110;
+const MINIMAP_PAD  = 24;  // 逻辑坐标外边距（预留空间）
+
+function minimapMarkDirty() { _minimapDirty = true; }
+
+function initMinimap() {
+    const wrapper = document.getElementById('canvas-wrapper');
+    if (!wrapper) return;
+
+    _minimapCanvas = document.createElement('canvas');
+    _minimapCanvas.id    = 'anna-minimap';
+    _minimapCanvas.width  = MINIMAP_W;
+    _minimapCanvas.height = MINIMAP_H;
+    _minimapCanvas.title  = 'Minimap — 点击导航';
+    wrapper.appendChild(_minimapCanvas);
+
+    // 点击/拖拽导航
+    let _navDragging = false;
+    _minimapCanvas.addEventListener('mousedown', e => {
+        e.stopPropagation();
+        _navDragging = true;
+        _minimapNavigate(e);
+    });
+    document.addEventListener('mousemove', e => {
+        if (_navDragging) _minimapNavigate(e);
+    });
+    document.addEventListener('mouseup', () => { _navDragging = false; });
+
+    // 启动低频刷新循环（约 20fps）
+    let _lastTs = 0;
+    const loop = (ts) => {
+        _minimapLoopId = requestAnimationFrame(loop);
+        if (!document.getElementById('whiteboard-view').classList.contains('hidden')) {
+            if (_minimapDirty && ts - _lastTs > 50) {
+                _lastTs = ts;
+                _minimapDirty = false;
+                _minimapDraw();
+            }
+        }
+    };
+    _minimapLoopId = requestAnimationFrame(loop);
+}
+
+/** 将 minimap 点击/拖拽坐标转换为逻辑坐标并移动视口 */
+function _minimapNavigate(e) {
+    if (!annPage || !_minimapCanvas) return;
+    const rect  = _minimapCanvas.getBoundingClientRect();
+    const mx    = e.clientX - rect.left;
+    const my    = e.clientY - rect.top;
+    const {toLog} = _minimapCalcTransform();
+    if (!toLog) return;
+    const {lx, ly} = toLog(mx, my);
+    // 以点击点为视口中心
+    const scale  = annPage.scaleX || 1;
+    const vw     = canvasDiv.clientWidth  / scale;
+    const vh     = canvasDiv.clientHeight / scale;
+    annPage.moveTo(-(lx - vw / 2), -(ly - vh / 2));
+    minimapMarkDirty();
+}
+
+/**
+ * 计算 minimap 到逻辑坐标的双向变换函数（含边距偏移）
+ * 返回 { toMap(lx,ly)→{mx,my},  toLog(mx,my)→{lx,ly},  s }
+ */
+function _minimapCalcTransform() {
+    if (!annPage) return {};
+    const shapes = annPage.sm.shapes;
+    const scale  = annPage.scaleX || 1;
+
+    // 视口逻辑区域
+    const vx1 = -annPage.x, vy1 = -annPage.y;
+    const vx2 = vx1 + canvasDiv.clientWidth  / scale;
+    const vy2 = vy1 + canvasDiv.clientHeight / scale;
+
+    // 所有形状 + 视口的包围盒
+    let bx1 = vx1, by1 = vy1, bx2 = vx2, by2 = vy2;
+    shapes.forEach(s => {
+        try {
+            const f = s.getShapeFrame?.() ?? {x1: s.x, y1: s.y, x2: s.x + s.width, y2: s.y + s.height};
+            if (!isFinite(f.x1)) return;
+            bx1 = Math.min(bx1, f.x1); by1 = Math.min(by1, f.y1);
+            bx2 = Math.max(bx2, f.x2); by2 = Math.max(by2, f.y2);
+        } catch (_) {}
+    });
+    bx1 -= MINIMAP_PAD; by1 -= MINIMAP_PAD;
+    bx2 += MINIMAP_PAD; by2 += MINIMAP_PAD;
+
+    const worldW = bx2 - bx1 || 1;
+    const worldH = by2 - by1 || 1;
+    const s = Math.min(MINIMAP_W / worldW, MINIMAP_H / worldH);
+    const offX = (MINIMAP_W - worldW * s) / 2;
+    const offY = (MINIMAP_H - worldH * s) / 2;
+
+    return {
+        s,
+        vx1, vy1, vx2, vy2,
+        toMap: (lx, ly) => ({ mx: offX + (lx - bx1) * s, my: offY + (ly - by1) * s }),
+        toLog: (mx, my) => ({ lx: (mx - offX) / s + bx1, ly: (my - offY) / s + by1 }),
+    };
+}
+
+function _minimapDraw() {
+    if (!_minimapCanvas || !annPage) return;
+    const ctx    = _minimapCanvas.getContext('2d');
+    const W = MINIMAP_W, H = MINIMAP_H;
+
+    const xf = _minimapCalcTransform();
+    if (!xf.toMap) { ctx.clearRect(0, 0, W, H); return; }
+    const {toMap, vx1, vy1, vx2, vy2} = xf;
+
+    // 背景
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(12,14,24,0.82)';
+    ctx.fillRect(0, 0, W, H);
+
+    // 形状（含旋转 & contentZoom 缩放）
+    annPage.sm.shapes.forEach(s => {
+        try {
+            // 用 getShapeFrame 获取视觉包围盒（已含正向 contentZoom 变换）
+            const f = s.getShapeFrame?.() ?? {x1: s.x, y1: s.y, x2: s.x + s.width, y2: s.y + s.height};
+            if (!isFinite(f.x1)) return;
+
+            // 缩略图中心点 = 视觉包围盒中心
+            const {mx: cx, my: cy} = toMap((f.x1 + f.x2) / 2, (f.y1 + f.y2) / 2);
+
+            // 视觉尺寸：父容器的 contentZoom 使子 shape 在视觉上缩放
+            const ctn = s.getContainer?.();
+            const cz  = (ctn && ctn !== annPage) ? (ctn.contentZoom || 1) : 1;
+            const sw  = Math.max(1, Math.abs(s.width)  * cz * xf.s);
+            const sh  = Math.max(1, Math.abs(s.height) * cz * xf.s);
+
+            const angle = (s.rotateDegree || 0) * Math.PI / 180;
+            const bc = s.getBackColor?.() || s.backColor || '#4a5070';
+            const bd = s.getBorderColor?.() || s.borderColor;
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            if (angle) ctx.rotate(angle);
+            ctx.fillStyle = bc;
+            ctx.fillRect(-sw / 2, -sh / 2, sw, sh);
+            if (bd) {
+                ctx.strokeStyle = bd;
+                ctx.lineWidth   = 0.5;
+                ctx.strokeRect(-sw / 2, -sh / 2, sw, sh);
+            }
+            ctx.restore();
+        } catch (_) {}
+    });
+
+    // 当前视口矩形（accent 紫色）
+    const {mx: vmx, my: vmy} = toMap(vx1, vy1);
+    const {mx: vmx2, my: vmy2} = toMap(vx2, vy2);
+    const vmw = vmx2 - vmx, vmh = vmy2 - vmy;
+    ctx.fillStyle   = 'rgba(124,111,247,0.10)';
+    ctx.fillRect(vmx, vmy, vmw, vmh);
+    ctx.strokeStyle = 'rgba(124,111,247,0.85)';
+    ctx.lineWidth   = 1.5;
+    ctx.strokeRect(vmx, vmy, vmw, vmh);
+}
+
 // ─── 导出：白板初始化入口 ─────────────────────────────────────────────────────
 
 export async function initWhiteboard() {
@@ -989,6 +1296,19 @@ export async function initWhiteboard() {
 
         // 属性面板挂载（在引擎就绪后，annGraph 已赋值）
         initPropertiesPanel(propsPanel, annGraph, () => annPage);
+
+        // 画布平移 & 缩略图
+        bindCanvasPan();
+        initMinimap();
+
+        // 引擎内部缩放（Shift+=/-、fillScreen 等）完成后同步 zoomLabel 并刷新缩略图
+        const _origZoomed = annPage.zoomed;
+        annPage.zoomed = (...args) => {
+            _origZoomed?.apply(annPage, args);
+            currentZoom = annPage.scaleX || 1;
+            syncZoomDisplay(currentZoom);
+            minimapMarkDirty();
+        };
 
         g.addEventListener(EVENT_TYPE.FOCUSED_SHAPES_CHANGE, shapes => {
             const focused = Array.isArray(shapes) ? shapes : (shapes ? [shapes] : []);
@@ -1006,6 +1326,7 @@ export async function initWhiteboard() {
             setTool('select');
             updateHistoryBtns();
             updateStatusBar();
+            minimapMarkDirty();
         });
 
         // 粘贴/删除等操作不一定触发 SHAPE_ADDED，通过 PAGE_DIRTY 做兜底
@@ -1014,6 +1335,7 @@ export async function initWhiteboard() {
         g.addEventListener(EVENT_TYPE.PAGE_DIRTY, () => {
             clearTimeout(_statusDebounce);
             _statusDebounce = setTimeout(updateStatusBar, 80);
+            minimapMarkDirty();
         });
 
         annPage.interactDrawer.getInteract().addEventListener('mouseup', () => {

@@ -33,40 +33,161 @@ export const getRotatedCoordinate = (x, y, cx, cy, degree) => {
     };
 };
 
+/**
+ * 逆变换：将视觉坐标 (x, y) 沿 parent 的祖先链变换回 shape 局部逻辑坐标。
+ * 用于命中检测（contains / getMouseOnConnector 等）。
+ * 处理顺序：最外层容器 → 最内层容器（outermost first），与渲染管线相反。
+ *
+ * @param {object} parent - 被测 shape（或容器）
+ * @param {number} x      - 输入 X（页面视觉逻辑坐标）
+ * @param {number} y      - 输入 Y（页面视觉逻辑坐标）
+ */
 export const convertPositionWithParents = (parent, x, y) => {
     let parents = [];
     let rotateDegree = 0;
-  let parentVal = parent;
-  while (parentVal !== parentVal.page) {
-    rotateDegree += parentVal.rotateDegree;
-    parents.push(parentVal);
-    parentVal = parentVal.getContainer();
+    let hasContentZoom = false;
+    let parentVal = parent;
+    let isTarget = true;
+    while (parentVal !== parentVal.page) {
+        rotateDegree += parentVal.rotateDegree;
+        if (!isTarget && parentVal.contentZoom && parentVal.contentZoom !== 1) {
+            hasContentZoom = true;
+        }
+        isTarget = false;
+        parents.push(parentVal);
+        parentVal = parentVal.getContainer();
     }
-    if (rotateDegree === 0) {
+
+    if (rotateDegree === 0 && !hasContentZoom) {
         return {x, y};
     }
 
     let convertPositionWithParent = (parents, x, y) => {
-      let xVal = x;
-      let yVal = y;
+        let xVal = x;
+        let yVal = y;
         if (parents.length === 0) {
-          return {x: xVal, y: yVal};
+            return {x: xVal, y: yVal};
         }
-        let parent = parents[parents.length - 1];
-        if (parent.scaleX !== undefined) {
-            xVal = parent.x + ((xVal - parent.x) / parent.scaleX);
+        let p = parents[parents.length - 1];
+        // 补偿父容器的 scaleX/scaleY（旋转时的缩放变换）
+        if (p.scaleX !== undefined) {
+            xVal = p.x + ((xVal - p.x) / p.scaleX);
         }
-        if (parent.scaleY !== undefined) {
-            yVal = parent.y + ((yVal - parent.y) / parent.scaleY);
+        if (p.scaleY !== undefined) {
+            yVal = p.y + ((yVal - p.y) / p.scaleY);
         }
-        let degree = parent.rotateDegree * Math.PI / 180;
-        let cx = parent.x + parent.width / 2;
-        let cy = parent.y + parent.height / 2;
-      let p = getRotatedCoordinate(xVal, yVal, cx, cy, -degree);
+        // 旋转修正（必须先于 contentZoom）
+        let degree = p.rotateDegree * Math.PI / 180;
+        let cx = p.x + p.width / 2;
+        let cy = p.y + p.height / 2;
+        let rotated = getRotatedCoordinate(xVal, yVal, cx, cy, -degree);
+        xVal = rotated.x;
+        yVal = rotated.y;
+
+        // 逆变换 contentZoom：视觉坐标 → 逻辑坐标
+        // CSS 视觉位置：visual = p.x + (child.x - p.x - bw) * cz
+        // 逆变换：lx = p.x + bw + (visual - p.x) / cz
+        // parents.length === 1 时 p 就是被测 shape 本身，不做容器 zoom 变换。
+        if (p.contentZoom && p.contentZoom !== 1 && parents.length > 1) {
+            const bw = p.borderWidth || 0;
+            xVal = p.x + bw + (xVal - p.x) / p.contentZoom;
+            yVal = p.y + bw + (yVal - p.y) / p.contentZoom;
+        }
+
         parents.pop();
-        return convertPositionWithParent(parents, p.x, p.y);
+        return convertPositionWithParent(parents, xVal, yVal);
     };
     return convertPositionWithParent(parents, x, y);
+};
+
+/**
+ * 正向变换：将 shape 的逻辑坐标 (x, y) 变换为页面视觉坐标。
+ * 用于 getShapeFrame（空间索引 & 缩略图）。
+ *
+ * 关键：嵌套容器时必须从最内层容器向最外层依次应用，与渲染管线一致：
+ *   child → innerContainer.contentZoom → innerContainer.rotate/scale
+ *        → outerContainer.contentZoom → outerContainer.rotate/scale → page
+ *
+ * @param {object} parent - 被测 shape（或容器）
+ * @param {number} x      - 输入 X（shape 逻辑坐标）
+ * @param {number} y      - 输入 Y（shape 逻辑坐标）
+ */
+export const getVisualPosition = (parent, x, y) => {
+    // 收集祖先链：parents[0]=shape, parents[1]=直接容器, ..., parents[n]=最外层容器
+    const parents = [];
+    let p = parent;
+    while (p !== p.page) {
+        parents.push(p);
+        p = p.getContainer();
+    }
+
+    if (parents.length === 0) return {x, y};
+
+    let xVal = x, yVal = y;
+
+    // Step 1：正向应用 shape 自身旋转（+degree，与渲染管线一致）
+    // 注意：必须用正角度才能得到正确的视觉坐标；
+    // 逆变换（convertPositionWithParents）才使用 -degree。
+    const self = parents[0];
+    if (self.rotateDegree) {
+        const cx = self.x + self.width / 2, cy = self.y + self.height / 2;
+        const r = getRotatedCoordinate(xVal, yVal, cx, cy, self.rotateDegree * Math.PI / 180);
+        xVal = r.x; yVal = r.y;
+    }
+
+    // Step 2：从最内层容器（index 1）到最外层容器（index n）依次正向变换。
+    // 渲染管线顺序：contentZoom(内 div scale) → scaleX/Y(外 div scale) → rotation(外 div rotate)。
+    // rotation 必须用 +degree（正向），否则与后续 contentZoom 叠加后 AABB 会完全偏移。
+    for (let i = 1; i < parents.length; i++) {
+        const c = parents[i];
+        const bw = c.borderWidth || 0;
+
+        // 正向 contentZoom：logical → visual（CSS inner div scale，origin 0,0）
+        if (c.contentZoom && c.contentZoom !== 1) {
+            xVal = c.x + (xVal - c.x - bw) * c.contentZoom;
+            yVal = c.y + (yVal - c.y - bw) * c.contentZoom;
+        }
+
+        // 正向 scaleX/scaleY（CSS outer div scale 部分）
+        if (c.scaleX !== undefined && c.scaleX !== 1) {
+            xVal = c.x + (xVal - c.x) * c.scaleX;
+        }
+        if (c.scaleY !== undefined && c.scaleY !== 1) {
+            yVal = c.y + (yVal - c.y) * c.scaleY;
+        }
+
+        // 正向 rotation（CSS outer div rotate 部分，+degree）
+        if (c.rotateDegree) {
+            const cx = c.x + c.width / 2, cy = c.y + c.height / 2;
+            const r = getRotatedCoordinate(xVal, yVal, cx, cy, c.rotateDegree * Math.PI / 180);
+            xVal = r.x; yVal = r.y;
+        }
+    }
+
+    return {x: xVal, y: yVal};
+};
+
+/**
+ * 根据形状及其所有祖先容器的累积旋转角度，将 resize connector 的方向映射到
+ * 旋转后对应的 CSS cursor 字符串。
+ *
+ * 仅适用于 8 向 resize 方向（N/NE/E/SE/S/SW/W/NW）；
+ * 其他方向（ROTATE/LINE/CLIP 等）返回 undefined，调用方保持原值不变。
+ *
+ * @param {string} directionKey - DIRECTION 对象的 key 字符串（如 'W', 'NE'）
+ * @param {number} totalDeg     - 形状 + 所有祖先容器旋转角度之和（度数）
+ * @returns {string|undefined}
+ */
+const _DIR_CYCLE = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+const _DIR_CURSOR = {
+    N: 'ns-resize', NE: 'nesw-resize', E: 'ew-resize', SE: 'nwse-resize',
+    S: 'ns-resize', SW: 'nesw-resize', W: 'ew-resize', NW: 'nwse-resize',
+};
+export const getRotatedConnectorCursor = (directionKey, totalDeg) => {
+    const idx = _DIR_CYCLE.indexOf(directionKey);
+    if (idx === -1) return undefined;
+    const steps = Math.round(((totalDeg % 360) + 360) % 360 / 45) % 8;
+    return _DIR_CURSOR[_DIR_CYCLE[(idx + steps) % 8]];
 };
 
 export const getInteractRect = (rect1, rect2) => {
@@ -394,4 +515,27 @@ export const getEditStatus = element => {
 
     // 调用辅助函数，从当前元素开始查找
     return _findContentEditableState(element);
+};
+
+/**
+ * Compute the axis-aligned bounding box (AABB) of a set of shapes.
+ * Uses each shape's getShapeFrame() if available, otherwise falls back to
+ * {x, y, x+width, y+height}.  Returns {x1, y1, x2, y2} in logical coords,
+ * or null when the array is empty.
+ *
+ * This is the canonical bounds algorithm shared by groupBox and group.
+ */
+export const computeShapesBounds = (shapes) => {
+    if (!shapes || !shapes.length) return null;
+    let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
+    shapes.forEach(s => {
+        const f = s.getShapeFrame
+            ? s.getShapeFrame()
+            : {x1: s.x, y1: s.y, x2: s.x + s.width, y2: s.y + s.height};
+        if (f.x1 < x1) x1 = f.x1;
+        if (f.y1 < y1) y1 = f.y1;
+        if (f.x2 > x2) x2 = f.x2;
+        if (f.y2 > y2) y2 = f.y2;
+    });
+    return (x1 < Infinity) ? {x1, y1, x2, y2} : null;
 };

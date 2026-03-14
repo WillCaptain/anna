@@ -746,7 +746,11 @@ const interactDrawer = (graph, page, div) => {
   Promise.resolve().then(() => {
     if (page.addEventListener) {
       page.addEventListener(EVENT_TYPE.FOCUSED_SHAPES_CHANGE, (shapes) => {
-        self.groupBox.update(Array.isArray(shapes) ? shapes : []);
+        const arr = Array.isArray(shapes) ? shapes : [];
+        self.groupBox.update(arr);
+        // 强制刷新每个 focused 形状的 animationCanvas，使 BULK_SELECT_THRESHOLD
+        // 检查能以最新的 focusedCount 执行，避免旧的单选轮廓残留在画面上。
+        arr.forEach(s => s.invalidateAlone?.());
       });
     }
   });
