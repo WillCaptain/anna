@@ -819,20 +819,26 @@ const shape = (id, x, y, width, height, parent, drawer) => {
   };
 
   /**
-   * 返回图形默认的followBar位置和偏移量,这里可以根据图形在画布中的位置,动态调整其location
-   *
-   * @returns { location: string}
+   * 返回 followBar 定位方向。
+   * 默认定位在图形上方（'top'），避免遮挡图形内容；
+   * 当图形距视口顶部过近（< 80px）时自动切换到下方（'bottom'）。
    */
   self.getFollowBarLocation = () => {
-    return 'bottom';
+    const page = self.page;
+    if (page && page.div) {
+      const rect = page.div.getBoundingClientRect();
+      const screenTop = rect.top + (self.y + (page.y || 0)) * (page.scaleY || 1);
+      if (screenTop < 80) return 'bottom';
+    }
+    return 'top';
   };
 
   /**
-   * 获取followBar的偏移量,这里可以根据图形的宽高和位置,动态调整偏移量
-   * @returns {number}
+   * 获取 followBar 的 CSS 偏移量（px）。
+   * top 定位：负值使工具栏浮在图形上方；bottom 定位：沿用原有值。
    */
   self.getFollowBarOffset = () => {
-    return DEFAULT_FOLLOW_BAR_OFFSET;
+    return self.getFollowBarLocation() === 'top' ? -52 : DEFAULT_FOLLOW_BAR_OFFSET;
   };
 
   /**

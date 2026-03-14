@@ -2,7 +2,7 @@
  *  Copyright (c) 2026 12th.ai Studio. All rights reserved.
  *--------------------------------------------------------------------------------------------*/
 
-import {ALIGN, DEFAULT_FOLLOW_BAR_OFFSET, DOCK_MODE, FONT_WEIGHT} from "../../common/const.js";
+import {ALIGN, DOCK_MODE, FONT_WEIGHT} from "../../common/const.js";
 import {container} from "../base/container.js";
 import {canvasContainerDrawer} from "../drawers/containerDrawer.js";
 import {text} from "../shapes/rectangle.js";
@@ -83,8 +83,8 @@ const boundOfShapes = (frames) => {
 
 const calculateShapesPosition = (frame) => {
     return {
-        getLocation: () => "bottom",
-        getOffset: () => DEFAULT_FOLLOW_BAR_OFFSET,
+        getLocation: () => "top",
+        getOffset: () => -52,
     };
 }
 

@@ -94,6 +94,10 @@ export const contextToolbar = () => {
 (() => {
     const style = document.createElement('style');
     style.innerHTML = `
+        @keyframes anna-toolbar-appear {
+            from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+            to   { opacity: 1; transform: translateX(-50%) translateY(0);   }
+        }
         .contextMenu {
             background: #fff0 !important;
             z-index: 999;
@@ -114,12 +118,14 @@ export const contextToolbar = () => {
             align-items: center;
             flex-wrap: nowrap;
             border: 1px solid #d3d3d3;
-            box-shadow: 0 2px 12px 0 rgba(56,56,56,.2);
+            box-shadow: 0 4px 16px 0 rgba(56,56,56,.18), 0 1px 4px 0 rgba(56,56,56,.10);
             padding: 5px;
             background: #fff;
-            border-radius: 2px;
+            border-radius: 6px;
             z-index: 999;
             pointer-events: auto;
+            animation: anna-toolbar-appear 0.14s cubic-bezier(.2,.8,.4,1) both;
+            white-space: nowrap;
         }
         .anna-toolbar .menu-group {
             display: flex;
