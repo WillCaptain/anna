@@ -1129,6 +1129,21 @@ function bindCanvasPan() {
 let _followTriggerEl     = null;
 let _followTriggerShapes = [];
 
+/**
+ * 计算形状旋转后底部中心点的逻辑坐标。
+ * 以形状几何中心为旋转轴，将底部中点向量旋转后叠加。
+ */
+function _rotatedBottomCenter(s) {
+    const angle  = ((s.rotateDegree || 0) * Math.PI) / 180;
+    const cx     = s.x + s.width  / 2;
+    const cy     = s.y + s.height / 2;
+    const halfH  = Math.abs(s.height) / 2;
+    return {
+        x: cx - halfH * Math.sin(angle),
+        y: cy + halfH * Math.cos(angle),
+    };
+}
+
 function _createFollowTrigger() {
     if (_followTriggerEl) return _followTriggerEl;
     const btn = document.createElement('button');
@@ -1170,30 +1185,40 @@ function _createFollowTrigger() {
     btn.addEventListener('click', e => {
         e.stopPropagation();
         const shapes = _followTriggerShapes.slice();
-        if (shapes.length > 0 && annPage) {
-            _hideFollowTrigger();
-            // 临时覆盖定位方法，使工具栏出现在形状下方
-            shapes.forEach(s => {
-                s._origFollowBarLocation = s.getFollowBarLocation;
-                s._origFollowBarOffset   = s.getFollowBarOffset;
-                s.getFollowBarLocation   = () => 'bottom';
-                s.getFollowBarOffset     = () => -60;
-            });
-            contextMenu(annPage, shapes);
-            // contextMenu 同步读取后即可还原
-            requestAnimationFrame(() => {
-                shapes.forEach(s => {
-                    if (s._origFollowBarLocation) {
-                        s.getFollowBarLocation = s._origFollowBarLocation;
-                        delete s._origFollowBarLocation;
-                    }
-                    if (s._origFollowBarOffset) {
-                        s.getFollowBarOffset = s._origFollowBarOffset;
-                        delete s._origFollowBarOffset;
-                    }
-                });
-            });
-        }
+        if (shapes.length === 0 || !annPage) return;
+
+        // 记录触发按钮的屏幕位置（菜单稍后将被移至此处）
+        const triggerRect = _followTriggerEl.getBoundingClientRect();
+        const triggerCX   = triggerRect.left + triggerRect.width / 2;
+        const triggerBY   = triggerRect.bottom + 8;
+
+        _hideFollowTrigger();
+        contextMenu(annPage, shapes);
+
+        // contextMenu 同步创建 toolbar DOM，rAF 后将其移至三点按钮正下方
+        requestAnimationFrame(() => {
+            const toolbar = document.getElementById('annaToolBar');
+            if (!toolbar) return;
+
+            // 从 canvas 层取出，改为 fixed 定位贴近触发按钮
+            toolbar.style.position  = 'fixed';
+            toolbar.style.left      = triggerCX + 'px';
+            toolbar.style.top       = triggerBY + 'px';
+            toolbar.style.bottom    = '';
+            toolbar.style.transform = 'translateX(-50%)';
+            document.body.appendChild(toolbar);
+
+            // 拦截 destroy，同步移除已搬移的 toolbar DOM
+            const ctb = annPage.contextToolbar;
+            if (ctb) {
+                const origDestroy = ctb.destroy.bind(ctb);
+                ctb.destroy = () => {
+                    origDestroy();
+                    if (toolbar.parentNode === document.body) toolbar.remove();
+                    ctb.destroy = origDestroy;
+                };
+            }
+        });
     });
     document.body.appendChild(btn);
     _followTriggerEl = btn;
@@ -1205,21 +1230,23 @@ function _positionFollowTrigger() {
     try {
         const rect  = canvasDiv.getBoundingClientRect();
         const scale = annPage.scaleX || 1;
-        let minX = Infinity, maxX = -Infinity, maxY = -Infinity;
+
+        // 对每个 shape 取旋转后底部中心点，找最低（Y最大）那个；X 取平均
+        let sumX = 0, maxY = -Infinity, count = 0;
         _followTriggerShapes.forEach(s => {
-            const f = s.getShapeFrame?.() ?? {
-                x1: s.x, y1: s.y,
-                x2: s.x + s.width, y2: s.y + s.height
-            };
-            if (!isFinite(f.x1)) return;
-            minX = Math.min(minX, f.x1);
-            maxX = Math.max(maxX, f.x2);
-            maxY = Math.max(maxY, f.y2);
+            try {
+                const {x: bx, y: by} = _rotatedBottomCenter(s);
+                if (!isFinite(by)) return;
+                sumX += bx;
+                maxY  = Math.max(maxY, by);
+                count++;
+            } catch (_) {}
         });
-        if (!isFinite(minX)) return;
-        const cx = (minX + maxX) / 2;
-        const screenX = rect.left + (cx     + annPage.x) * scale;
-        const screenY = rect.top  + (maxY   + annPage.y) * scale + 10;
+        if (count === 0) return;
+
+        const logCX  = sumX / count;
+        const screenX = rect.left + (logCX + annPage.x) * scale;
+        const screenY = rect.top  + (maxY  + annPage.y) * scale + 10;
         _followTriggerEl.style.left = screenX + 'px';
         _followTriggerEl.style.top  = screenY + 'px';
     } catch (_) {}
