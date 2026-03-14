@@ -1243,6 +1243,41 @@ function _minimapDraw() {
     // 形状（含旋转 & contentZoom 缩放）
     annPage.sm.shapes.forEach(s => {
         try {
+            // line：从 from() 到 to() 画线段
+            if (s.type === 'line') {
+                const from = s.from?.();
+                const to   = s.to?.();
+                if (!from || !to) return;
+                const {mx: x1, my: y1} = toMap(from.x, from.y);
+                const {mx: x2, my: y2} = toMap(to.x,   to.y);
+                const bd = s.getBorderColor?.() || s.borderColor || '#7a8499';
+                ctx.save();
+                ctx.strokeStyle = bd;
+                ctx.lineWidth   = 1;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+                ctx.restore();
+                return;
+            }
+
+            // freeLine：用包围盒中心画小点表示存在
+            if (s.type === 'freeLine') {
+                const f = s.getShapeFrame?.() ?? {x1: s.x, y1: s.y, x2: s.x + s.width, y2: s.y + s.height};
+                if (!isFinite(f.x1)) return;
+                const {mx: cx, my: cy} = toMap((f.x1 + f.x2) / 2, (f.y1 + f.y2) / 2);
+                const bd = s.getBorderColor?.() || s.borderColor || '#7a8499';
+                const sw = Math.max(2, Math.abs(s.width)  * xf.s);
+                const sh = Math.max(2, Math.abs(s.height) * xf.s);
+                ctx.save();
+                ctx.strokeStyle = bd;
+                ctx.lineWidth   = 1;
+                ctx.strokeRect(cx - sw / 2, cy - sh / 2, sw, sh);
+                ctx.restore();
+                return;
+            }
+
             // 用 getShapeFrame 获取视觉包围盒（已含正向 contentZoom 变换）
             const f = s.getShapeFrame?.() ?? {x1: s.x, y1: s.y, x2: s.x + s.width, y2: s.y + s.height};
             if (!isFinite(f.x1)) return;
