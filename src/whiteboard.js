@@ -12,6 +12,7 @@ import {EVENT_TYPE, PAGE_OPERATION_MODE} from '@anna/common/const.js';
 import {t, isZh} from './i18n.js';
 import {initPropertiesPanel, syncPanelFromShapes} from './propertiesPanel.js';
 import {iconTheme} from '@anna/plugins/icons/iconTheme.js';
+import {contextMenu} from '@anna/core/contextToolbar/popupMenu.js';
 
 // ─── 主题配色方案 ─────────────────────────────────────────────────────────────
 const CANVAS_THEMES = [
@@ -1079,16 +1080,19 @@ function bindCanvasPan() {
             // Ctrl + 滚轮 = 缩放（以鼠标位置为中心）
             const delta = dy > 0 ? -ZOOM_STEP : ZOOM_STEP;
             setZoom(delta);
+            _positionFollowTrigger();
         } else if (e.shiftKey) {
             // Shift + 滚轮 = 水平平移
             const speed = 1 / (annPage.scaleX || 1);
             annPage.moveTo(annPage.x - dy * speed, annPage.y);
             minimapMarkDirty();
+            _positionFollowTrigger();
         } else {
             // 普通滚轮 = 垂直平移（trackpad 双向）
             const speed = 1 / (annPage.scaleX || 1);
             annPage.moveTo(annPage.x - dx * speed, annPage.y - dy * speed);
             minimapMarkDirty();
+            _positionFollowTrigger();
         }
     }, { passive: false });
 
@@ -1110,6 +1114,7 @@ function bindCanvasPan() {
         _midX = e.clientX;
         _midY = e.clientY;
         minimapMarkDirty();
+        _positionFollowTrigger();
     });
     document.addEventListener('mouseup', e => {
         if (e.button === 1 && _midDrag) {
@@ -1117,6 +1122,100 @@ function bindCanvasPan() {
             if (annPage) annPage.operationMode = PAGE_OPERATION_MODE.SELECTION;
         }
     });
+}
+
+// ─── 跟随菜单触发按钮 ────────────────────────────────────────────────────────
+
+let _followTriggerEl     = null;
+let _followTriggerShapes = [];
+
+function _createFollowTrigger() {
+    if (_followTriggerEl) return _followTriggerEl;
+    const btn = document.createElement('button');
+    btn.id = 'anna-follow-trigger';
+    btn.title = '操作菜单';
+    btn.innerHTML = `<svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
+        <circle cx="4"  cy="10" r="1.8"/>
+        <circle cx="10" cy="10" r="1.8"/>
+        <circle cx="16" cy="10" r="1.8"/>
+    </svg>`;
+    btn.style.cssText = [
+        'position:fixed',
+        'z-index:10000',
+        'display:none',
+        'align-items:center',
+        'justify-content:center',
+        'width:26px',
+        'height:26px',
+        'border-radius:50%',
+        'border:1px solid var(--border2,#343850)',
+        'background:var(--surface,#13151f)',
+        'color:var(--text-dim,#6b7a9e)',
+        'cursor:pointer',
+        'box-shadow:0 2px 8px rgba(0,0,0,0.35)',
+        'transform:translate(-50%,0)',
+        'transition:background 0.1s,color 0.1s',
+        'pointer-events:auto',
+        'padding:0',
+    ].join(';');
+    btn.addEventListener('mouseenter', () => {
+        btn.style.color      = 'var(--text,#d0d8f0)';
+        btn.style.background = 'var(--surface3,#242840)';
+    });
+    btn.addEventListener('mouseleave', () => {
+        btn.style.color      = 'var(--text-dim,#6b7a9e)';
+        btn.style.background = 'var(--surface,#13151f)';
+    });
+    btn.addEventListener('mousedown', e => e.stopPropagation());
+    btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const shapes = _followTriggerShapes.slice();
+        if (shapes.length > 0 && annPage) {
+            _hideFollowTrigger();
+            contextMenu(annPage, shapes);
+        }
+    });
+    document.body.appendChild(btn);
+    _followTriggerEl = btn;
+    return btn;
+}
+
+function _positionFollowTrigger() {
+    if (!_followTriggerEl || !annPage || !canvasDiv || _followTriggerShapes.length === 0) return;
+    try {
+        const rect  = canvasDiv.getBoundingClientRect();
+        const scale = annPage.scaleX || 1;
+        let minX = Infinity, maxX = -Infinity, maxY = -Infinity;
+        _followTriggerShapes.forEach(s => {
+            const f = s.getShapeFrame?.() ?? {
+                x1: s.x, y1: s.y,
+                x2: s.x + s.width, y2: s.y + s.height
+            };
+            if (!isFinite(f.x1)) return;
+            minX = Math.min(minX, f.x1);
+            maxX = Math.max(maxX, f.x2);
+            maxY = Math.max(maxY, f.y2);
+        });
+        if (!isFinite(minX)) return;
+        const cx = (minX + maxX) / 2;
+        const screenX = rect.left + (cx     + annPage.x) * scale;
+        const screenY = rect.top  + (maxY   + annPage.y) * scale + 10;
+        _followTriggerEl.style.left = screenX + 'px';
+        _followTriggerEl.style.top  = screenY + 'px';
+    } catch (_) {}
+}
+
+function _showFollowTrigger(shapes) {
+    _followTriggerShapes = shapes || [];
+    if (_followTriggerShapes.length === 0) { _hideFollowTrigger(); return; }
+    const btn = _createFollowTrigger();
+    _positionFollowTrigger();
+    btn.style.display = 'flex';
+}
+
+function _hideFollowTrigger() {
+    _followTriggerShapes = [];
+    if (_followTriggerEl) _followTriggerEl.style.display = 'none';
 }
 
 // ─── 缩略图（Minimap）────────────────────────────────────────────────────────
@@ -1336,6 +1435,9 @@ export async function initWhiteboard() {
         bindCanvasPan();
         initMinimap();
 
+        // 禁用引擎自动弹出跟随工具栏（改为点击下方图标触发）
+        annPage.disableContextMenu = true;
+
         // 引擎内部缩放（Shift+=/-、fillScreen 等）完成后同步 zoomLabel 并刷新缩略图
         const _origZoomed = annPage.zoomed;
         annPage.zoomed = (...args) => {
@@ -1343,6 +1445,7 @@ export async function initWhiteboard() {
             currentZoom = annPage.scaleX || 1;
             syncZoomDisplay(currentZoom);
             minimapMarkDirty();
+            _positionFollowTrigger();
         };
 
         g.addEventListener(EVENT_TYPE.FOCUSED_SHAPES_CHANGE, shapes => {
@@ -1350,8 +1453,10 @@ export async function initWhiteboard() {
             if (focused.length > 0) {
                 propsPanel.classList.remove('hidden');
                 syncPanelFromShapes(focused);
+                _showFollowTrigger(focused);
             } else {
                 propsPanel.classList.add('hidden');
+                _hideFollowTrigger();
             }
             updateHistoryBtns();
             updateStatusBar();
@@ -1371,6 +1476,7 @@ export async function initWhiteboard() {
             clearTimeout(_statusDebounce);
             _statusDebounce = setTimeout(updateStatusBar, 80);
             minimapMarkDirty();
+            _positionFollowTrigger();
         });
 
         annPage.interactDrawer.getInteract().addEventListener('mouseup', () => {
