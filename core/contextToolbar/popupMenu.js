@@ -83,8 +83,8 @@ const boundOfShapes = (frames) => {
 
 const calculateShapesPosition = (frame) => {
     return {
-        getLocation: () => "top",
-        getOffset: () => -52,
+        getLocation: () => "bottom",
+        getOffset: () => -60,
     };
 }
 

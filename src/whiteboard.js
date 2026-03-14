@@ -1172,7 +1172,27 @@ function _createFollowTrigger() {
         const shapes = _followTriggerShapes.slice();
         if (shapes.length > 0 && annPage) {
             _hideFollowTrigger();
+            // 临时覆盖定位方法，使工具栏出现在形状下方
+            shapes.forEach(s => {
+                s._origFollowBarLocation = s.getFollowBarLocation;
+                s._origFollowBarOffset   = s.getFollowBarOffset;
+                s.getFollowBarLocation   = () => 'bottom';
+                s.getFollowBarOffset     = () => -60;
+            });
             contextMenu(annPage, shapes);
+            // contextMenu 同步读取后即可还原
+            requestAnimationFrame(() => {
+                shapes.forEach(s => {
+                    if (s._origFollowBarLocation) {
+                        s.getFollowBarLocation = s._origFollowBarLocation;
+                        delete s._origFollowBarLocation;
+                    }
+                    if (s._origFollowBarOffset) {
+                        s.getFollowBarOffset = s._origFollowBarOffset;
+                        delete s._origFollowBarOffset;
+                    }
+                });
+            });
         }
     });
     document.body.appendChild(btn);
